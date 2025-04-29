@@ -2,12 +2,13 @@
   import { onMount, onDestroy } from 'svelte';
   import axios from 'redaxios';
   import SlideItem from './SlideItem.svelte';
+  import { type Slide, SlideType } from './types';
 
   const { slideInterval = 10000 } = $props();
   const LOAD_THRESHOLD = 2;
   const MAX_IMAGES = 15;
 
-  let images = $state<string[]>([]);
+  let images = $state<Array<Slide>>([]);
   let currentIndex = $state(0);
   let isLoading = $state(true);
   let isTransitioning = $state(false);
@@ -26,22 +27,24 @@
 
     try {
       isFetchingMore = true;
-      const response = await axios.get('/api/images');
+      const response = await axios.get<Slide[]>('/api/slides');
 
       if (response.data && response.data.length > 0) {
-        const newImageIds = response.data.map((image: any) => image.id as string);
+        const newImages = response.data;
 
         if (append) {
-          const uniqueNewIds = newImageIds.filter((id: string) => !images.includes(id));
-          if (uniqueNewIds.length > 0) {
-            const combined = [...images, ...uniqueNewIds];
+          const existingIds = new Set(images.map((img: any) => img.id));
+          const uniqueNewImages = newImages.filter((img: any) => !existingIds.has(img.id));
+
+          if (uniqueNewImages.length > 0) {
+            const combined = [...images, ...uniqueNewImages];
             images = combined.slice(-MAX_IMAGES);
 
             const removedCount = combined.length - images.length;
             currentIndex = Math.max(0, currentIndex - removedCount);
           }
         } else {
-          images = [...newImageIds];
+          images = [...newImages];
         }
       }
     } catch (error) {
@@ -215,7 +218,7 @@
       ontouchend={handleTouchEnd}
       ontouchcancel={handleTouchEnd}
     >
-      {#each images as imageId, index (imageId)}
+      {#each images as image, index (image.id)}
         <div
           class="absolute h-full w-full ease-in-out will-change-auto"
           style="
@@ -226,7 +229,14 @@
   transition: {isDragging ? 'none' : 'opacity 0.7s, scale 0.7s '};
 "
         >
-          <SlideItem {imageId} />
+          {#if image.type === SlideType.DOUBLE}
+            <div class="flex w-full h-full gap-2">
+              <SlideItem image={image.items[0]} class="flex-1 h-full" />
+              <SlideItem image={image.items[1]} class="flex-1 h-full" />
+            </div>
+          {:else}
+            <SlideItem image={image.items[0]} class="w-full h-full" isPortrait={image.isPortrait} />
+          {/if}
         </div>
       {/each}
 

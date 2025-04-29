@@ -1,3 +1,4 @@
+// @ts-nocheck
 window.onload = () => {
   function startReceiver() {
     const context = cast.framework.CastReceiverContext.getInstance();
@@ -15,8 +16,6 @@ window.onload = () => {
     const mediaPlayer = document.createElement('cast-media-player');
     mediaPlayer.style.display = 'none';
     document.body.appendChild(mediaPlayer);
-
-    // context.setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
 
     context.addEventListener(cast.framework.system.EventType.READY, () => {
       context.setApplicationState('Immich Receiver Ready');
@@ -49,7 +48,7 @@ window.onload = () => {
       .then(() => console.log('Dummy image loaded'))
       .catch((err) => {
         console.error('Error loading dummy image', err);
-        setTimeout(playDummyMedia, 5000); // Retry
+        setTimeout(playDummyMedia, 5000);
       });
 
     setTimeout(playDummyMedia, 60 * 9 * 1000); // Refresh every ~9 mins

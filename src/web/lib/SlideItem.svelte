@@ -1,49 +1,71 @@
 <script lang="ts">
   import dayjs from 'dayjs';
   import axios from 'redaxios';
+  import { type ImageInfo } from './types';
 
-  const { imageId } = $props<{ imageId: string }>();
+  const { image, class: className, isPortrait } = $props<{ image: ImageInfo; class?: string; isPortrait?: boolean }>();
 
-  let imageInfo = $state<{ asset: { fileCreatedAt: string }; location: { formatedLocation: string } | null }>();
-  let isPortrait = $state(false);
+  let imageLocation = $state<string | null>();
 
-  function onLoadImage(e) {
-    isPortrait = e.target.naturalHeight > e.target.naturalWidth;
-
-    if (!imageInfo) {
+  function onLoadImage() {
+    if (!imageLocation && image.latitude && image.longitude) {
       axios
-        .get(`/api/images/${imageId}/info`)
+        .get(`/api/location?latitude=${image.latitude}&longitude=${image.longitude}`)
         .then((res) => {
-          imageInfo = res.data;
+          imageLocation = res.data;
         })
         .catch((error) => {
-          console.error(`Error load image info for ${imageId}:`, error);
+          console.error(`Error load image location for ${image.id}:`, error);
         });
     }
   }
+
+  const getAvatarBg = (color: string) => {
+    switch (color) {
+      case 'gray':
+        return 'bg-gray-500';
+      case 'yellow':
+        return 'bg-yellow-500';
+      case 'blue':
+        return 'bg-blue-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  const getInitials = (name: string) =>
+    name
+      .split(' ')
+      .map((i) => i[0])
+      .join('');
 </script>
 
-<div class="w-screen h-screen flex-shrink-0 relative">
+<div class="{className || ''} flex-shrink-0 relative">
   <img
     class="w-full h-full {isPortrait ? 'object-contain' : 'object-cover'}"
-    src={`/api/images/${imageId}`}
-    alt={`Image ${imageId}`}
+    src={`/api/images/${image.id}`}
+    alt={`Image ${image.id}`}
     loading="lazy"
     onload={onLoadImage}
   />
 
-  {#if imageInfo}
-    <div class="absolute bottom-0 left-0 right-0 text-white flex items-end justify-between text-xl font-light gap-2">
-      {#if imageInfo.location}
-        <div class="bg-black/35 px-2 py-1 rounded-tr-lg backdrop-blur-[2px]">
-          {imageInfo.location?.formatedLocation}
-        </div>
-      {:else}
-        <div></div>
-      {/if}
-      <div class="bg-black/35 px-2 py-1 rounded-tl-lg backdrop-blur-[2px] flex-shrink-0">
-        {dayjs(imageInfo.asset.fileCreatedAt).format('DD MMM YYYY')}
-      </div>
+  <div class="absolute top-2 right-2">
+    <div
+      class={`text-lg size-10 rounded-full flex items-center justify-center select-none ${getAvatarBg(image.ownerAvatarColor)}`}
+    >
+      {getInitials(image.ownerName)}
     </div>
-  {/if}
+  </div>
+  <div class="absolute bottom-0 left-0 right-0 text-white flex items-end justify-between text-xl font-light gap-2">
+    {#if imageLocation}
+      <div class="bg-black/35 px-2 py-1 rounded-tr-lg backdrop-blur-[2px]">
+        {imageLocation}
+      </div>
+    {:else}
+      <div></div>
+    {/if}
+    <div class="bg-black/35 px-2 py-1 rounded-tl-lg backdrop-blur-[2px] flex-shrink-0">
+      {dayjs(image.fileCreatedAt).format('DD MMM YYYY')}
+    </div>
+  </div>
 </div>
