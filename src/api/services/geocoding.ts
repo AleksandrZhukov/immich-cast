@@ -128,7 +128,7 @@ export const reverseGeocode = async (lat: number | undefined, lon: number | unde
         'accept-language': 'en',
       },
       headers: {
-        'User-Agent': 'ImmichHub/1.0',
+        'User-Agent': 'ImmichCast/1.0',
       },
     });
 
