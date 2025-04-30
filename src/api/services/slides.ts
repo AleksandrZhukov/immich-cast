@@ -35,7 +35,7 @@ export type Slide = SingleSlide | DoubleSlide;
 export const isPortrait = (info: ImageInfo): boolean => {
   const value = Number(info.orientation) ?? ExifOrientation.Horizontal;
 
-  console.log('isPortrait', info.id, value, typeof value);
+  console.log('isPortrait', info.id, value, ExifOrientation[value]);
 
   switch (value) {
     case ExifOrientation.Rotate90CW:

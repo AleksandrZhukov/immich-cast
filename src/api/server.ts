@@ -3,7 +3,7 @@ import fastifyStatic from '@fastify/static';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { env } from './config/env';
-import { immichApi } from './services/immich';
+import { validateToken } from './services/immich';
 import { registerRoutes } from './routes';
 import { startMonitoring } from './cast/monitor';
 
@@ -21,7 +21,7 @@ registerRoutes(server);
 
 const start = async () => {
   try {
-    await immichApi.post('/auth/validateToken');
+    await validateToken();
 
     try {
       await server.listen({ port: env.server.port, host: '0.0.0.0' });

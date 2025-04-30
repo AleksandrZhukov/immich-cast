@@ -12,22 +12,32 @@ export const immichApi = axios.create({
 
 export const BATCH_SIZE = 10;
 
+export const validateToken = () => immichApi.post('/auth/validateToken');
+
 export const fetchRandomImages = async (): Promise<AssetResponseDto[]> => {
   try {
-    const searchResult = await immichApi.post<AssetResponseDto[]>('/search/random', {
+    const res = await immichApi.post<AssetResponseDto[]>('/search/random', {
       isVisible: true,
       size: BATCH_SIZE,
       takenAfter: '2017-01-01T00:00:00.000Z',
       type: AssetTypeEnum.Image,
     });
-    return searchResult.data;
+    return res.data;
   } catch (error) {
     console.error('Error fetching random images:', error);
     return [];
   }
 };
 
+export const getAssetBuffer = async (id: string): Promise<Buffer<any>> => {
+  const res = await immichApi.get(`/assets/${id}/thumbnail?size=preview`, {
+    responseType: 'arraybuffer',
+  });
+
+  return Buffer.from(res.data);
+};
+
 export const fetchAssetInfo = async (id: string): Promise<AssetResponseDto> => {
-  const assetResp = await immichApi.get<AssetResponseDto>(`/assets/${id}`);
-  return assetResp.data;
+  const res = await immichApi.get<AssetResponseDto>(`/assets/${id}`);
+  return res.data;
 };
