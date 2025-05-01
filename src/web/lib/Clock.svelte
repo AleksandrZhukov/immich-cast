@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import dayjs from 'dayjs';
 
@@ -8,7 +8,7 @@
     time = new Date();
   };
 
-  let interval;
+  let interval: ReturnType<typeof setInterval>;
 
   onMount(() => {
     interval = setInterval(updateTime, 1000);
@@ -19,9 +19,7 @@
   });
 </script>
 
-<div
-  class="absolute top-2 left-2 z-10 bg-black/35 text-white backdrop-blur-[2px] px-3 py-1 rounded-md font-light text-center"
->
-  <div class="text-2xl">{dayjs(time).format('DD MMM YYYY')}</div>
-  <div class="text-8xl">{dayjs(time).format('HH:mm')}</div>
+<div class="text-white font-light text-center">
+  <div class="text-xl">{dayjs(time).format('DD MMM YYYY')}</div>
+  <div class="text-7xl">{dayjs(time).format('HH:mm')}</div>
 </div>

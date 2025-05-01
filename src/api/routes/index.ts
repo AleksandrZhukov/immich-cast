@@ -2,6 +2,7 @@ import { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { fetchRandomImages, getAssetBuffer } from '../services/immich';
 import { reverseGeocode } from '../services/geocoding';
 import { fetchSlides } from '../services/slides';
+import { getCurrentWeather } from '../services/weather';
 import { env } from '../config/env';
 
 export const registerRoutes = (server: FastifyInstance) => {
@@ -44,10 +45,13 @@ export const registerRoutes = (server: FastifyInstance) => {
       );
 
       instance.get('/config', async (_, res) => {
-        const config = {
-          slideInterval: env.client.slideInterval,
-        };
+        const config = env.client;
         res.send(config);
+      });
+
+      instance.get('/weather', async (_, res) => {
+        const weather = await getCurrentWeather();
+        res.send(weather);
       });
 
       next();

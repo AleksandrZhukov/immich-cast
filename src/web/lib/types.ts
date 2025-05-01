@@ -27,3 +27,16 @@ export type DoubleSlide = {
 };
 
 export type Slide = SingleSlide | DoubleSlide;
+
+export type WeatherResponse = {
+  aqi: number;
+  humidity: number;
+  icon: string;
+  iconUrl: string;
+  pressure: number;
+  temperature: number;
+  wind: {
+    speed: number;
+    direction: number;
+  };
+};

@@ -36,10 +36,15 @@ export const env = {
     startHour,
     endHour,
   },
+  weather: {
+    cityId: process.env.IQAIR_CITY_ID,
+  },
   server: {
     port: Number(process.env.PORT) || 2284,
   },
   client: {
     slideInterval: Number(process.env.SLIDE_INTERVAL) || 30000,
+    weatherEnabled: process.env.WEATHER_ENABLED === 'true',
+    weatherRefreshInterval: Number(process.env.WEATHER_REFRESH_INTERVAL) || 60000,
   },
 };

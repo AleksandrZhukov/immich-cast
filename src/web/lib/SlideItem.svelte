@@ -56,7 +56,9 @@
       {getInitials(image.ownerName)}
     </div>
   </div>
-  <div class="absolute bottom-0 left-0 right-0 text-white flex items-end justify-between text-xl font-light gap-2">
+  <div
+    class="absolute bottom-0 left-0 right-0 text-white flex items-end justify-between text-xl font-light gap-2 text-shadow-md text-shadow-black/15"
+  >
     {#if imageLocation}
       <div class="bg-black/35 px-2 py-1 rounded-tr-lg backdrop-blur-[2px]">
         {imageLocation}
