@@ -48,7 +48,7 @@ export const isPortrait = (info: ImageInfo): boolean => {
     case ExifOrientation.Rotate180:
     case ExifOrientation.MirrorVertical:
     default:
-      return info.height > info.width;
+      return info.height >= info.width;
   }
 };
 let pendingPortrait: ImageInfo | null = null;
