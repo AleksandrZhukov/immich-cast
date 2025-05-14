@@ -18,6 +18,7 @@ export const fetchRandomImages = async (): Promise<AssetResponseDto[]> => {
   try {
     const res = await immichApi.post<AssetResponseDto[]>('/search/random', {
       isVisible: true,
+      isArchived: false,
       size: BATCH_SIZE,
       takenAfter: '2017-01-01T00:00:00.000Z',
       type: AssetTypeEnum.Image,
@@ -39,5 +40,26 @@ export const getAssetBuffer = async (id: string): Promise<Buffer<any>> => {
 
 export const fetchAssetInfo = async (id: string): Promise<AssetResponseDto> => {
   const res = await immichApi.get<AssetResponseDto>(`/assets/${id}`);
+  return res.data;
+};
+
+export const archiveAsset = async (id: string): Promise<AssetResponseDto> => {
+  const { ownerId } = await fetchAssetInfo(id);
+
+  const apiKey = env.immich.ownersApiKeys[ownerId];
+
+  if (!apiKey) {
+    throw new Error(`No API key found for owner ${ownerId}`);
+  }
+
+  const res = await immichApi.put<AssetResponseDto>(
+    `/assets/${id}`,
+    { isArchived: true },
+    {
+      headers: {
+        'x-api-key': apiKey,
+      },
+    },
+  );
   return res.data;
 };

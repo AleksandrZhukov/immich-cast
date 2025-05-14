@@ -6,6 +6,7 @@
   const { image, class: className, isPortrait } = $props<{ image: ImageInfo; class?: string; isPortrait?: boolean }>();
 
   let imageLocation = $state<string | null>();
+  let isArchived = $state(false);
 
   function onLoadImage() {
     if (!imageLocation && image.latitude && image.longitude) {
@@ -19,6 +20,15 @@
         });
     }
   }
+
+  const archiveImage = async () => {
+    try {
+      await axios.post(`/api/images/${image.id}/archive`);
+      isArchived = true;
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const getAvatarBg = (color: string) => {
     switch (color) {
@@ -40,7 +50,7 @@
       .join('');
 </script>
 
-<div class="{className || ''} flex-shrink-0 relative">
+<div class="{className || ''} flex-shrink-0 relative {isArchived ? 'opacity-30' : ''}">
   <img
     class="w-full h-full {isPortrait ? 'object-contain' : 'object-cover'}"
     src={`/api/images/${image.id}`}
@@ -66,7 +76,7 @@
     {:else}
       <div></div>
     {/if}
-    <div class="bg-black/35 px-2 py-1 rounded-tl-lg backdrop-blur-[2px] flex-shrink-0">
+    <div class="bg-black/35 px-2 py-1 rounded-tl-lg backdrop-blur-[2px] flex-shrink-0" onclick={archiveImage}>
       {dayjs(image.fileCreatedAt).format('DD MMM YYYY')}
     </div>
   </div>

@@ -24,10 +24,18 @@ if (startHour < 0 || endHour > 23 || endHour < startHour) {
   throw new Error('Invalid START_HOUR or END_HOUR environment variable');
 }
 
+const ownersApiKeys = process.env.IMMICH_OWNERS_API_KEYS?.split(',') ?? [];
+const ownersApiKeysMap = ownersApiKeys.reduce<Record<string, string>>((acc, item) => {
+  const [uuid, key] = item.split('=');
+  acc[uuid] = key;
+  return acc;
+}, {});
+
 export const env = {
   immich: {
     apiUrl: requiredEnvVars.IMMICH_API_URL,
     apiKey: requiredEnvVars.IMMICH_API_KEY,
+    ownersApiKeys: ownersApiKeysMap,
   },
   cast: {
     ip: requiredEnvVars.CHROMECAST_IP,

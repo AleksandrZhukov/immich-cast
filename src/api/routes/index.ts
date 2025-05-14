@@ -1,9 +1,10 @@
 import { type FastifyInstance, type FastifyRequest } from 'fastify';
-import { fetchRandomImages, getAssetBuffer } from '../services/immich';
+import { fetchRandomImages, getAssetBuffer, archiveAsset } from '../services/immich';
 import { reverseGeocode } from '../services/geocoding';
 import { fetchSlides } from '../services/slides';
 import { getCurrentWeather } from '../services/weather';
 import { env } from '../config/env';
+import { AxiosError } from 'axios';
 
 export const registerRoutes = (server: FastifyInstance) => {
   server.register(
@@ -27,6 +28,20 @@ export const registerRoutes = (server: FastifyInstance) => {
         } catch (error) {
           console.error(`Error fetching image ${request.params}:`, error);
           res.status(500).send({ error: 'Failed to fetch image' });
+        }
+      });
+
+      instance.post('/images/:id/archive', async (request: FastifyRequest<{ Params: { id: string } }>, res) => {
+        try {
+          const { id } = request.params;
+          const asset = await archiveAsset(id);
+          res.send(asset);
+        } catch (error) {
+          if (error instanceof AxiosError) {
+            console.error(`Error archiving image ${request.params.id}:`, error.response?.data);
+            res.status(400).send({ error: error.response?.data });
+          }
+          res.status(500).send({ error: 'Unknown error' });
         }
       });
 
