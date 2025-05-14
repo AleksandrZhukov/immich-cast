@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 node:20.12-alpine
+FROM --platform=linux/amd64 node:24-alpine
 
 RUN apk add --no-cache tzdata
 
