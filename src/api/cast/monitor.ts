@@ -131,10 +131,8 @@ export const startMonitoring = async () => {
       receiver.send({ type: 'GET_STATUS', requestId: 1 });
 
       while (true) {
-        if (!isLaunching) {
-          await delay(isWithinTimeRange() ? 5000 : 60_000);
-          receiver.send({ type: 'GET_STATUS', requestId: ++requestCounter });
-        }
+        await delay(isWithinTimeRange() ? 5000 : 60_000);
+        receiver.send({ type: 'GET_STATUS', requestId: ++requestCounter });
       }
     } catch (err) {
       if (err instanceof Error) {
