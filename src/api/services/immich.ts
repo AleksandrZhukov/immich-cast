@@ -54,7 +54,7 @@ export const archiveAsset = async (id: string): Promise<AssetResponseDto> => {
 
   const res = await immichApi.put<AssetResponseDto>(
     `/assets/${id}`,
-    { isArchived: true },
+    { visibility: 'archive' },
     {
       headers: {
         'x-api-key': apiKey,
