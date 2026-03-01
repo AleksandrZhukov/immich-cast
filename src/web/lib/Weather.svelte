@@ -13,17 +13,14 @@
       const response = await axios.get<WeatherResponse>('/api/weather');
       weather = response.data;
     } catch (err) {
-      console.log('Error fetching weather:', err);
+      console.error('Error fetching weather:', err);
+      weather = null;
     }
   }
 
   onMount(() => {
     fetchWeather();
     intervalId = setInterval(fetchWeather, refreshInterval);
-  });
-
-  onDestroy(() => {
-    clearInterval(intervalId);
   });
 
   onDestroy(() => {
