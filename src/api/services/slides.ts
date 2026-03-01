@@ -1,6 +1,7 @@
 import { fetchAssetInfo, fetchRandomImages } from './immich';
 import { type AssetResponseDto, ExifOrientation } from '../../types';
 import { ImageHistoryTracker } from '../utils/imageHistory';
+import { MemoryDeck } from '../utils/memoryDeck';
 
 export interface ImageInfo {
   id: string;
@@ -12,6 +13,7 @@ export interface ImageInfo {
   latitude: number | null;
   longitude: number | null;
   orientation?: string | null;
+  yearsAgo?: number;
 }
 
 const enum SlideType {
@@ -34,6 +36,19 @@ export type DoubleSlide = {
 export type Slide = SingleSlide | DoubleSlide;
 
 const imageHistory = new ImageHistoryTracker(10000);
+const memoryDeck = new MemoryDeck();
+
+let memoryDeckInitPromise: Promise<void> | null = null;
+
+function ensureMemoryDeck(): Promise<void> {
+  if (!memoryDeckInitPromise) {
+    memoryDeckInitPromise = memoryDeck.init().catch((error) => {
+      console.error('Failed to initialize memory deck:', error);
+      memoryDeckInitPromise = null;
+    });
+  }
+  return memoryDeckInitPromise;
+}
 
 export const isPortrait = (info: ImageInfo): boolean => {
   const value = Number(info.orientation) ?? ExifOrientation.Horizontal;
@@ -56,27 +71,25 @@ export const isPortrait = (info: ImageInfo): boolean => {
 };
 let pendingPortrait: ImageInfo | null = null;
 
-export async function fetchSlides(): Promise<Slide[]> {
+async function fetchGeneralImages(count: number): Promise<ImageInfo[]> {
   let assets: AssetResponseDto[] = [];
   let attempts = 0;
   const maxAttempts = 5;
 
-  while (assets.length < 6 && attempts < maxAttempts) {
+  while (assets.length < count && attempts < maxAttempts) {
     const fetchedAssets = await fetchRandomImages();
-
     const newAssets = fetchedAssets.filter((asset) => !imageHistory.hasBeenShown(asset.id));
     assets = assets.concat(newAssets);
-
     attempts++;
 
-    if (assets.length < 6) {
-      console.log(`Attempt ${attempts}: Have ${assets.length} new images, need 6, fetching more...`);
+    if (assets.length < count) {
+      console.log(`Attempt ${attempts}: Have ${assets.length} general images, need ${count}, fetching more...`);
     }
   }
 
-  if (assets.length < 6) {
+  if (assets.length < count) {
     console.warn(
-      `Could not find 6 new images after ${maxAttempts} attempts (history: ${imageHistory.getHistorySize()}), clearing history and retrying`,
+      `Could not find ${count} new images after ${maxAttempts} attempts (history: ${imageHistory.getHistorySize()}), clearing history and retrying`,
     );
     imageHistory.clear();
     const additionalAssets = await fetchRandomImages();
@@ -85,8 +98,8 @@ export async function fetchSlides(): Promise<Slide[]> {
 
   assets.forEach((asset) => imageHistory.addImage(asset.id));
 
-  const infos: ImageInfo[] = await Promise.all(
-    assets.map(async (asset): Promise<ImageInfo> => {
+  return Promise.all(
+    assets.slice(0, count).map(async (asset): Promise<ImageInfo> => {
       const info = await fetchAssetInfo(asset.id);
       const exif = info?.exifInfo || {};
       return {
@@ -102,6 +115,43 @@ export async function fetchSlides(): Promise<Slide[]> {
       };
     }),
   );
+}
+
+function interleave(general: ImageInfo[], memories: ImageInfo[]): ImageInfo[] {
+  if (memories.length === 0) return general;
+  if (general.length === 0) return memories;
+
+  const result: ImageInfo[] = [];
+  const spacing = Math.floor(general.length / (memories.length + 1));
+
+  let memIdx = 0;
+  for (let i = 0; i < general.length; i++) {
+    result.push(general[i]);
+    if (memIdx < memories.length && (i + 1) % Math.max(spacing, 2) === 0) {
+      result.push(memories[memIdx++]);
+    }
+  }
+
+  // append any remaining memories
+  while (memIdx < memories.length) {
+    result.push(memories[memIdx++]);
+  }
+
+  return result;
+}
+
+export async function fetchSlides(): Promise<Slide[]> {
+  await ensureMemoryDeck();
+
+  const memoryCount = 2;
+  const generalCount = 4;
+
+  const [memoryImages, generalImages] = await Promise.all([
+    memoryDeck.deal(memoryCount),
+    fetchGeneralImages(generalCount),
+  ]);
+
+  const infos = interleave(generalImages, memoryImages);
 
   const slides: Slide[] = [];
 
@@ -127,7 +177,9 @@ export async function fetchSlides(): Promise<Slide[]> {
     }
   }
 
-  console.log(`Generated ${slides.length} slides, history size: ${imageHistory.getHistorySize()}`);
+  console.log(
+    `Generated ${slides.length} slides (${memoryImages.length} memories, ${generalImages.length} general), history size: ${imageHistory.getHistorySize()}`,
+  );
 
   return slides;
 }

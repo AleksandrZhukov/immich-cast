@@ -30,6 +30,23 @@ export const fetchRandomImages = async (): Promise<AssetResponseDto[]> => {
   }
 };
 
+export const fetchMemoryImages = async (takenAfter: string, takenBefore: string): Promise<AssetResponseDto[]> => {
+  try {
+    const res = await immichApi.post<AssetResponseDto[]>('/search/random', {
+      isVisible: true,
+      isArchived: false,
+      size: BATCH_SIZE,
+      takenAfter,
+      takenBefore,
+      type: AssetTypeEnum.Image,
+    });
+    return res.data;
+  } catch (error) {
+    console.error(`Error fetching memory images (${takenAfter} - ${takenBefore}):`, error);
+    return [];
+  }
+};
+
 export const getAssetBuffer = async (id: string): Promise<Buffer<any>> => {
   const res = await immichApi.get(`/assets/${id}/thumbnail?size=preview`, {
     responseType: 'arraybuffer',

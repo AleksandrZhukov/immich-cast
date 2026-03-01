@@ -7,6 +7,7 @@ export type ImageInfo = {
   fileCreatedAt: string;
   latitude: number | null;
   longitude: number | null;
+  yearsAgo?: number;
 };
 
 export const enum SlideType {

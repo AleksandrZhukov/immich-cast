@@ -77,6 +77,10 @@
       <div></div>
     {/if}
     <div class="bg-black/35 px-2 py-1 rounded-tl-lg backdrop-blur-[2px] flex-shrink-0" onclick={archiveImage}>
+      {#if image.yearsAgo}
+        <span class="text-amber-300">{image.yearsAgo} {image.yearsAgo === 1 ? 'year' : 'years'} ago</span>
+        <span class="opacity-60 mx-1">&middot;</span>
+      {/if}
       {dayjs(image.fileCreatedAt).format('DD MMM YYYY')}
     </div>
   </div>
