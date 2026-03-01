@@ -11,6 +11,9 @@ export class MemoryDeck {
   private cards: MemoryCard[] = [];
   private cursor = 0;
   private initialized = false;
+  private shuffleCount = 0;
+  private totalShown = 0;
+  private shownByYear: Record<number, number> = {};
 
   async init(): Promise<void> {
     const now = new Date();
@@ -18,6 +21,7 @@ export class MemoryDeck {
     const startYear = 2017;
 
     const allCards: MemoryCard[] = [];
+    const perYear: string[] = [];
 
     for (let year = startYear; year < currentYear; year++) {
       const yearsAgo = currentYear - year;
@@ -33,14 +37,17 @@ export class MemoryDeck {
         allCards.push({ asset, yearsAgo });
       }
 
-      console.log(`Memory deck: ${year} (${yearsAgo}y ago) — ${assets.length} images`);
+      if (assets.length > 0) {
+        perYear.push(`${year}: ${assets.length}`);
+      }
+      this.shownByYear[yearsAgo] = 0;
     }
 
     this.cards = allCards;
     this.shuffle();
     this.initialized = true;
 
-    console.log(`Memory deck initialized: ${this.cards.length} total images`);
+    console.log(`[memory] 🃏 Initialized with ${this.cards.length} images (${perYear.join(', ')})`);
   }
 
   isReady(): boolean {
@@ -55,14 +62,30 @@ export class MemoryDeck {
     for (let i = 0; i < count; i++) {
       if (this.cursor >= this.cards.length) {
         this.shuffle();
+        console.log(
+          `[memory] 🔀 Reshuffled deck (cycle #${this.shuffleCount}), total shown so far: ${this.totalShown}`,
+        );
       }
 
       const card = this.cards[this.cursor++];
       const info = await this.cardToImageInfo(card);
       dealt.push(info);
+
+      this.totalShown++;
+      this.shownByYear[card.yearsAgo] = (this.shownByYear[card.yearsAgo] || 0) + 1;
     }
 
     return dealt;
+  }
+
+  getStats(): { total: number; shown: number; remaining: number; shuffles: number; byYear: Record<number, number> } {
+    return {
+      total: this.cards.length,
+      shown: this.totalShown,
+      remaining: this.cards.length - this.cursor,
+      shuffles: this.shuffleCount,
+      byYear: { ...this.shownByYear },
+    };
   }
 
   private async cardToImageInfo(card: MemoryCard): Promise<ImageInfo> {
@@ -85,6 +108,7 @@ export class MemoryDeck {
 
   private shuffle(): void {
     this.cursor = 0;
+    this.shuffleCount++;
     for (let i = this.cards.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];

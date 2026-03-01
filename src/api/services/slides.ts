@@ -39,11 +39,12 @@ const imageHistory = new ImageHistoryTracker(10000);
 const memoryDeck = new MemoryDeck();
 
 let memoryDeckInitPromise: Promise<void> | null = null;
+let slideFetchCount = 0;
 
 function ensureMemoryDeck(): Promise<void> {
   if (!memoryDeckInitPromise) {
     memoryDeckInitPromise = memoryDeck.init().catch((error) => {
-      console.error('Failed to initialize memory deck:', error);
+      console.error('[memory] ❌ Failed to initialize:', error);
       memoryDeckInitPromise = null;
     });
   }
@@ -52,8 +53,6 @@ function ensureMemoryDeck(): Promise<void> {
 
 export const isPortrait = (info: ImageInfo): boolean => {
   const value = Number(info.orientation) ?? ExifOrientation.Horizontal;
-
-  console.log('isPortrait', info.id, value, ExifOrientation[value]);
 
   switch (value) {
     case ExifOrientation.Rotate90CW:
@@ -81,16 +80,10 @@ async function fetchGeneralImages(count: number): Promise<ImageInfo[]> {
     const newAssets = fetchedAssets.filter((asset) => !imageHistory.hasBeenShown(asset.id));
     assets = assets.concat(newAssets);
     attempts++;
-
-    if (assets.length < count) {
-      console.log(`Attempt ${attempts}: Have ${assets.length} general images, need ${count}, fetching more...`);
-    }
   }
 
   if (assets.length < count) {
-    console.warn(
-      `Could not find ${count} new images after ${maxAttempts} attempts (history: ${imageHistory.getHistorySize()}), clearing history and retrying`,
-    );
+    console.warn(`[slides] ⚠️ History full (${imageHistory.getHistorySize()}), clearing and retrying`);
     imageHistory.clear();
     const additionalAssets = await fetchRandomImages();
     assets = assets.concat(additionalAssets);
@@ -132,7 +125,6 @@ function interleave(general: ImageInfo[], memories: ImageInfo[]): ImageInfo[] {
     }
   }
 
-  // append any remaining memories
   while (memIdx < memories.length) {
     result.push(memories[memIdx++]);
   }
@@ -177,8 +169,15 @@ export async function fetchSlides(): Promise<Slide[]> {
     }
   }
 
+  slideFetchCount++;
+  const memStats = memoryDeck.getStats();
+  const memYears = Object.entries(memStats.byYear)
+    .filter(([, count]) => count > 0)
+    .map(([y, count]) => `${y}y:${count}`)
+    .join(' ');
+
   console.log(
-    `Generated ${slides.length} slides (${memoryImages.length} memories, ${generalImages.length} general), history size: ${imageHistory.getHistorySize()}`,
+    `[slides] 🖼️ #${slideFetchCount} — ${slides.length} slides (${memoryImages.length}m/${generalImages.length}g) | history: ${imageHistory.getHistorySize()} | memory: ${memStats.shown}/${memStats.total} shown, ${memStats.remaining} left, ${memStats.shuffles} shuffles | ${memYears}`,
   );
 
   return slides;

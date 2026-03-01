@@ -28,7 +28,7 @@ const connectClient = (ip: string) =>
 const launchApp = (receiver: Channel, volume: number | undefined) =>
   new Promise<void>((resolve) => {
     isLaunching = true;
-    console.log('🚀 Launching Cast App...');
+    console.log('[cast] 🚀 Launching app...');
     receiver.send({ type: 'SET_VOLUME', volume: { muted: true }, requestId: 1 });
     receiver.send({ type: 'LAUNCH', appId: APP_ID, requestId: 1 });
     receiver.send({ type: 'SET_VOLUME', volume: { level: volume || 0.25 }, requestId: 1 });
@@ -49,11 +49,11 @@ const sendUrlToApp = (client: Client, transportId: ApplicationInfo['transportId'
   castConnection.send({ type: 'CONNECT' });
 
   appChannel.on('message', (msg) => {
-    console.log('📩 App Response:', msg);
+    console.log('[cast] 📩 App response:', msg);
   });
 
   appChannel.send(JSON.stringify({ type: 'loc', url: CAST_URL }));
-  console.log('🌐 Sent URL to Chromecast');
+  console.log('[cast] 🌐 Sent URL to Chromecast');
 };
 
 const isWithinTimeRange = () => {
@@ -70,7 +70,7 @@ export const startMonitoring = async () => {
   while (true) {
     try {
       client = await connectClient(CHROMECAST_IP);
-      console.log('✅ Connected to Chromecast');
+      console.log('[cast] ✅ Connected to Chromecast');
 
       const connection = client.createChannel(
         'sender-0',
@@ -83,35 +83,29 @@ export const startMonitoring = async () => {
       connection.send({ type: 'CONNECT' });
 
       receiver.on('message', async (data) => {
-        console.log('data', data);
         if (!isReceiverStatusMessage(data)) return;
 
         const app = data.status?.applications?.[0];
         const isIdle = app?.isIdleScreen;
 
-        // Stop app if outside allowed hours
         if (!isWithinTimeRange()) {
-          console.log('🛑 Outside allowed hours. Stopping the app...');
           if (app?.appId === APP_ID) {
+            console.log('[cast] 🛑 Outside allowed hours, stopping app');
             receiver.send({ type: 'STOP', sessionId: app.sessionId, requestId: ++requestCounter });
           }
           return;
         }
 
         if (isIdle && !isLaunching) {
-          console.log('⛔ Detected idle screen. Validating...');
           isIdleCount++;
-          const reallyIdle = isIdleCount === IDLE_CONFIRMATION_ATTEMPTS;
-          if (reallyIdle) {
+          if (isIdleCount === IDLE_CONFIRMATION_ATTEMPTS) {
             isIdleCount = 0;
-            console.log('✅ Idle confirmed. Relaunching...');
+            console.log('[cast] 🔄 Idle confirmed, relaunching...');
             const currentVolume = data.status?.volume?.level;
             await launchApp(receiver, currentVolume);
           }
         } else {
-          if (app) {
-            console.log(app ? `🚀 ${app?.displayName} is running.` : '🚀 No app running.');
-          }
+          isIdleCount = 0;
         }
 
         if (
@@ -136,7 +130,7 @@ export const startMonitoring = async () => {
       }
     } catch (err) {
       if (err instanceof Error) {
-        console.error('❌ Chromecast Error:', err.message);
+        console.error('[cast] ❌ Error:', err.message);
       }
       if (client) {
         try {
@@ -145,7 +139,7 @@ export const startMonitoring = async () => {
       }
       client = null;
       await delay(2000);
-      console.log('🔁 Reconnecting...');
+      console.log('[cast] 🔁 Reconnecting...');
     }
   }
 };
