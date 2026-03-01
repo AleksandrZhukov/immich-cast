@@ -27,6 +27,10 @@ export class ImageHistoryTracker {
     return this.shownImages.has(imageId);
   }
 
+  clear(): void {
+    this.shownImages.clear();
+  }
+
   getHistorySize(): number {
     return this.shownImages.size;
   }

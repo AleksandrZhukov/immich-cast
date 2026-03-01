@@ -33,7 +33,7 @@ export type DoubleSlide = {
 
 export type Slide = SingleSlide | DoubleSlide;
 
-const imageHistory = new ImageHistoryTracker(1000);
+const imageHistory = new ImageHistoryTracker(10000);
 
 export const isPortrait = (info: ImageInfo): boolean => {
   const value = Number(info.orientation) ?? ExifOrientation.Horizontal;
@@ -75,7 +75,10 @@ export async function fetchSlides(): Promise<Slide[]> {
   }
 
   if (assets.length < 6) {
-    console.warn(`Could not find 5 new images after maximum attempts, using ${assets.length} images`);
+    console.warn(
+      `Could not find 6 new images after ${maxAttempts} attempts (history: ${imageHistory.getHistorySize()}), clearing history and retrying`,
+    );
+    imageHistory.clear();
     const additionalAssets = await fetchRandomImages();
     assets = assets.concat(additionalAssets);
   }
