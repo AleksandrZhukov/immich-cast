@@ -135,8 +135,8 @@ function interleave(general: ImageInfo[], memories: ImageInfo[]): ImageInfo[] {
 export async function fetchSlides(): Promise<Slide[]> {
   await ensureMemoryDeck();
 
-  const memoryCount = 2;
-  const generalCount = 4;
+  const memoryCount = 1;
+  const generalCount = 5;
 
   const [memoryImages, generalImages] = await Promise.all([
     memoryDeck.deal(memoryCount),
