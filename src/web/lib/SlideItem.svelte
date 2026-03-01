@@ -76,10 +76,15 @@
     {:else}
       <div></div>
     {/if}
-    <div class="bg-black/35 px-2 py-1 rounded-tl-lg backdrop-blur-[2px] flex-shrink-0" onclick={archiveImage}>
+    <div
+      class=" flex-shrink-0 bg-black/35 px-2 py-1 rounded-tl-lg backdrop-blur-[2px] flex flex-col"
+      onclick={archiveImage}
+    >
       {#if image.yearsAgo}
-        <span class="text-amber-300">{image.yearsAgo} {image.yearsAgo === 1 ? 'year' : 'years'} ago</span>
-        <span class="opacity-60 mx-1">&middot;</span>
+        <div class="flex items-baseline justify-center gap-1">
+          <span class="text-4xl">{image.yearsAgo}</span>
+          <span class="text-sm">{image.yearsAgo === 1 ? 'year' : 'years'} ago</span>
+        </div>
       {/if}
       {dayjs(image.fileCreatedAt).format('DD MMM YYYY')}
     </div>
