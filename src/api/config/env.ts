@@ -33,13 +33,13 @@ const ownersApiKeysMap = ownersApiKeys.reduce<Record<string, string>>((acc, item
 
 export const env = {
   immich: {
-    apiUrl: requiredEnvVars.IMMICH_API_URL,
-    apiKey: requiredEnvVars.IMMICH_API_KEY,
+    apiUrl: requiredEnvVars.IMMICH_API_URL!,
+    apiKey: requiredEnvVars.IMMICH_API_KEY!,
     ownersApiKeys: ownersApiKeysMap,
   },
   cast: {
-    ip: requiredEnvVars.CHROMECAST_IP,
-    url: requiredEnvVars.CAST_URL,
+    ip: requiredEnvVars.CHROMECAST_IP!,
+    url: requiredEnvVars.CAST_URL!,
     appId: '5CB45E5A', // Default Chromecast app ID
     startHour,
     endHour,

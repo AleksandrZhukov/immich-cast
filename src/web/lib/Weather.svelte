@@ -39,6 +39,22 @@
       return 'text-red-400';
     }
   };
+
+  const getWindSpeedColor = (speed: number) => {
+    if (speed <= 15) {
+      return 'text-white';
+    } else if (speed <= 20) {
+      return 'text-yellow-400';
+    } else if (speed <= 25) {
+      return 'text-orange-400';
+    } else if (speed <= 30) {
+      return 'text-orange-500';
+    } else if (speed <= 40) {
+      return 'text-red-400';
+    } else {
+      return 'text-red-600';
+    }
+  };
 </script>
 
 {#if weather}
@@ -68,7 +84,7 @@
             stroke-linejoin="round"
           />
         </svg>
-        <span class="text-2xl">
+        <span class={`text-2xl ${getWindSpeedColor(weather.wind.speed)}`}>
           {weather.wind.speed}
           <span class="text-sm">km/h</span>
         </span>

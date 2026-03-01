@@ -1,5 +1,6 @@
 import { fetchAssetInfo, fetchRandomImages } from './immich';
 import { type AssetResponseDto, ExifOrientation } from '../../types';
+import { ImageHistoryTracker } from '../utils/imageHistory';
 
 export interface ImageInfo {
   id: string;
@@ -32,6 +33,8 @@ export type DoubleSlide = {
 
 export type Slide = SingleSlide | DoubleSlide;
 
+const imageHistory = new ImageHistoryTracker(1000);
+
 export const isPortrait = (info: ImageInfo): boolean => {
   const value = Number(info.orientation) ?? ExifOrientation.Horizontal;
 
@@ -54,7 +57,30 @@ export const isPortrait = (info: ImageInfo): boolean => {
 let pendingPortrait: ImageInfo | null = null;
 
 export async function fetchSlides(): Promise<Slide[]> {
-  const assets: AssetResponseDto[] = await fetchRandomImages();
+  let assets: AssetResponseDto[] = [];
+  let attempts = 0;
+  const maxAttempts = 5;
+
+  while (assets.length < 6 && attempts < maxAttempts) {
+    const fetchedAssets = await fetchRandomImages();
+
+    const newAssets = fetchedAssets.filter((asset) => !imageHistory.hasBeenShown(asset.id));
+    assets = assets.concat(newAssets);
+
+    attempts++;
+
+    if (assets.length < 6) {
+      console.log(`Attempt ${attempts}: Have ${assets.length} new images, need 6, fetching more...`);
+    }
+  }
+
+  if (assets.length < 6) {
+    console.warn(`Could not find 5 new images after maximum attempts, using ${assets.length} images`);
+    const additionalAssets = await fetchRandomImages();
+    assets = assets.concat(additionalAssets);
+  }
+
+  assets.forEach((asset) => imageHistory.addImage(asset.id));
 
   const infos: ImageInfo[] = await Promise.all(
     assets.map(async (asset): Promise<ImageInfo> => {
@@ -97,6 +123,8 @@ export async function fetchSlides(): Promise<Slide[]> {
       });
     }
   }
+
+  console.log(`Generated ${slides.length} slides, history size: ${imageHistory.getHistorySize()}`);
 
   return slides;
 }
