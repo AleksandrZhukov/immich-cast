@@ -25,13 +25,10 @@ export class MemoryDeck {
 
     for (let year = startYear; year < currentYear; year++) {
       const yearsAgo = currentYear - year;
-      const center = new Date(year, now.getMonth(), now.getDate());
-      const after = new Date(center);
-      after.setDate(after.getDate() - 7);
-      const before = new Date(center);
-      before.setDate(before.getDate() + 7);
+      const dayStart = new Date(year, now.getMonth(), now.getDate());
+      const dayEnd = new Date(year, now.getMonth(), now.getDate() + 1);
 
-      const assets = await fetchMemoryImages(after.toISOString(), before.toISOString());
+      const assets = await fetchMemoryImages(dayStart.toISOString(), dayEnd.toISOString());
 
       for (const asset of assets) {
         allCards.push({ asset, yearsAgo });
