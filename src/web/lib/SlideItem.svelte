@@ -76,6 +76,7 @@
     {:else}
       <div></div>
     {/if}
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div
       class=" flex-shrink-0 bg-black/35 px-2 py-1 rounded-tl-lg backdrop-blur-[2px] flex flex-col"
       onclick={archiveImage}

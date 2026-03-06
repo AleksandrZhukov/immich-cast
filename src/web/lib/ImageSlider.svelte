@@ -211,6 +211,7 @@
       <div class="text-2xl">No images available</div>
     </div>
   {:else}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class="relative h-full w-full overflow-hidden touch-pan-y"
       ontouchstart={handleTouchStart}
