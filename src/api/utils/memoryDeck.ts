@@ -14,8 +14,21 @@ export class MemoryDeck {
   private shuffleCount = 0;
   private totalShown = 0;
   private shownByYear: Record<number, number> = {};
+  private initializedDate: string | null = null;
+
+  private static todayKey(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+  }
 
   async init(): Promise<void> {
+    this.cards = [];
+    this.cursor = 0;
+    this.initialized = false;
+    this.shuffleCount = 0;
+    this.totalShown = 0;
+    this.shownByYear = {};
+
     const now = new Date();
     const currentYear = now.getFullYear();
     const startYear = 2017;
@@ -43,6 +56,7 @@ export class MemoryDeck {
     this.cards = allCards;
     this.shuffle();
     this.initialized = true;
+    this.initializedDate = MemoryDeck.todayKey();
 
     console.log(`[memory] 🃏 Initialized with ${this.cards.length} images (${perYear.join(', ')})`);
   }
@@ -52,6 +66,11 @@ export class MemoryDeck {
   }
 
   async deal(count: number): Promise<ImageInfo[]> {
+    if (this.initializedDate && this.initializedDate !== MemoryDeck.todayKey()) {
+      console.log('[memory] New day detected, reinitializing memory deck');
+      await this.init();
+    }
+
     if (!this.isReady()) return [];
 
     const dealt: ImageInfo[] = [];
