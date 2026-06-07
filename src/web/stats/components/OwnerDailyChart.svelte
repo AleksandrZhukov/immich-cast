@@ -45,7 +45,8 @@
     const result: Band[] = [];
     const cumulative = new Array(data.days.length).fill(0);
 
-    for (const ownerId of stackOrder) {
+    for (let oi = 0; oi < stackOrder.length; oi++) {
+      const ownerId = stackOrder[oi];
       const owner = data.owners.find((o: { ownerId: string }) => o.ownerId === ownerId);
       if (!owner) continue;
       const top: number[] = [];
@@ -68,7 +69,7 @@
       result.push({
         ownerId,
         ownerName: owner.ownerName,
-        color: ownerColor(ownerId),
+        color: ownerColor(oi),
         total: owner.total,
         path: d,
       });

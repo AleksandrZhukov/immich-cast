@@ -33,22 +33,8 @@ export function formatDate(d: Date): string {
   return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 }
 
-const OWNER_COLORS: Record<string, string> = {
-  primary: '#7dd3fc',
-  pink: '#f9a8d4',
-  red: '#fca5a5',
-  yellow: '#fde68a',
-  blue: '#93c5fd',
-  green: '#86efac',
-  purple: '#c4b5fd',
-  orange: '#fdba74',
-  gray: '#d4d4d8',
-  amber: '#fcd34d',
-};
+const OWNER_PALETTE = ['#7dd3fc', '#fbbf24', '#c4b5fd', '#86efac', '#f9a8d4', '#fdba74'];
 
-export function ownerColor(seed: string): string {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) | 0;
-  const keys = Object.keys(OWNER_COLORS);
-  return OWNER_COLORS[keys[Math.abs(hash) % keys.length]];
+export function ownerColor(index: number): string {
+  return OWNER_PALETTE[index % OWNER_PALETTE.length];
 }
