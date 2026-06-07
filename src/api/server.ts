@@ -19,6 +19,8 @@ server.register(fastifyStatic, {
 
 registerRoutes(server);
 
+server.get('/stats', (_, reply) => reply.sendFile('stats.html'));
+
 const start = async () => {
   try {
     await validateToken();

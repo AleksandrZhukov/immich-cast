@@ -10,6 +10,12 @@ export default defineConfig(() => {
     build: {
       outDir: '../../dist',
       emptyOutDir: true,
+      rollupOptions: {
+        input: {
+          main: 'index.html',
+          stats: 'stats.html',
+        },
+      },
     },
     ...(env.VITE_USER_NODE_ENV === 'development'
       ? {
