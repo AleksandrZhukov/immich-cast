@@ -22,7 +22,7 @@
 
   // Ken Burns: pick a target zoom + pan once per slide. Translate is clamped to
   // (endScale-1)/2 so the panned image still covers the frame without edges.
-  const endScale = 1.08 + Math.random() * 0.07;
+  const endScale = 1.18 + Math.random() * 0.12;
   const maxTranslate = (endScale - 1) * 50 * 0.8;
   const endX = (Math.random() - 0.5) * 2 * maxTranslate;
   const endY = (Math.random() - 0.5) * 2 * maxTranslate;
