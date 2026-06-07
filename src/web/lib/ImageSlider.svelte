@@ -18,6 +18,7 @@
   let touchEndX = $state(0);
   let isDragging = $state(false);
   let dragOffset = $state(0);
+  let archivePromptOpen = $state(false);
 
   let intervalId: number;
   let mounted = false;
@@ -93,7 +94,20 @@
 
   function startSlideInterval() {
     if (intervalId) clearInterval(intervalId);
+    if (archivePromptOpen) return;
     intervalId = setInterval(() => nextSlide(true), slideInterval) as unknown as number;
+  }
+
+  function onArchivePromptChange(open: boolean) {
+    archivePromptOpen = open;
+    if (open) {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = 0;
+      }
+    } else {
+      startSlideInterval();
+    }
   }
 
   function handleKeydown(event: KeyboardEvent) {
@@ -237,12 +251,14 @@
                 class="flex-1 h-full"
                 isActive={index === currentIndex}
                 duration={slideInterval}
+                {onArchivePromptChange}
               />
               <SlideItem
                 image={image.items[1]}
                 class="flex-1 h-full"
                 isActive={index === currentIndex}
                 duration={slideInterval}
+                {onArchivePromptChange}
               />
             </div>
           {:else}
@@ -252,6 +268,7 @@
               isPortrait={image.isPortrait}
               isActive={index === currentIndex}
               duration={slideInterval}
+              {onArchivePromptChange}
             />
           {/if}
         </div>
