@@ -1,12 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { CaptureSpread, CastEventRow, DailyPoint, MemoryDeck, Summary } from './lib/api';
+  import type { CaptureSpread, CastEventRow, DailyByOwner, DailyPoint, MemoryDeck, Summary } from './lib/api';
   import { api } from './lib/api';
   import StatCard from './components/StatCard.svelte';
   import RangePicker, { type RangeKey } from './components/RangePicker.svelte';
   import CaptureSpreadView from './components/CaptureSpread.svelte';
   import DailyChart from './components/DailyChart.svelte';
-  import OwnerBars from './components/OwnerBars.svelte';
+  import OwnerDailyChart from './components/OwnerDailyChart.svelte';
   import CaptureYearBars from './components/CaptureYearBars.svelte';
   import MemoryDeckPanel from './components/MemoryDeckPanel.svelte';
   import CastEventsLog from './components/CastEventsLog.svelte';
@@ -14,11 +14,14 @@
   let rangeKey = $state<RangeKey>('30d');
   let summary = $state<Summary | null>(null);
   let daily = $state<DailyPoint[]>([]);
+  let dailyByOwner = $state<DailyByOwner | null>(null);
   let captureSpread = $state<CaptureSpread | null>(null);
   let castEvents = $state<CastEventRow[]>([]);
   let memoryDeck = $state<MemoryDeck | null>(null);
   let loading = $state(true);
   let knownDays = $state<string[]>([]);
+
+  const activeDays = $derived(daily.filter((d) => d.served > 0).length);
 
   async function rangeFor(key: RangeKey): Promise<{ from: Date; to: Date }> {
     const to = new Date();
@@ -33,15 +36,17 @@
   async function load() {
     loading = true;
     const range = await rangeFor(rangeKey);
-    const [s, d, sp, ce, md] = await Promise.all([
+    const [s, d, dbo, sp, ce, md] = await Promise.all([
       api.summary(range),
       api.daily(range),
+      api.dailyByOwner(range),
       api.captureSpread(range),
       api.castEvents(range),
       api.memoryDeck(),
     ]);
     summary = s;
     daily = d;
+    dailyByOwner = dbo;
     captureSpread = sp;
     castEvents = ce;
     memoryDeck = md;
@@ -103,10 +108,10 @@
         />
         <StatCard label="Unique owners" value={summary.uniqueOwners} accent="violet" delay={160} />
         <StatCard
-          label="Days tracked"
-          value={summary.rangeDays}
+          label="Active days"
+          value={activeDays}
           accent="sky"
-          hint={`since ${knownDays[0] ?? '—'}`}
+          hint={knownDays[0] ? `data since ${knownDays[0]}` : 'no data yet'}
           delay={240}
         />
       </section>
@@ -126,23 +131,25 @@
         </section>
       {/if}
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
-        <section class="panel p-6 lg:col-span-2 fade-up" style="animation-delay: 400ms">
-          <h2 class="text-lg font-medium mb-1">Slides served per day</h2>
-          <p class="text-xs text-zinc-500 mb-4">Across the selected range.</p>
-          {#if daily.length > 0}
-            <DailyChart data={daily} />
-          {:else}
-            <div class="text-sm text-zinc-500 italic">No data in this range.</div>
-          {/if}
-        </section>
+      <section class="panel p-6 mb-4 fade-up" style="animation-delay: 400ms">
+        <h2 class="text-lg font-medium mb-1">Slides served per day</h2>
+        <p class="text-xs text-zinc-500 mb-4">Across the selected range.</p>
+        {#if daily.length > 0}
+          <DailyChart data={daily} />
+        {:else}
+          <div class="text-sm text-zinc-500 italic">No data in this range.</div>
+        {/if}
+      </section>
 
-        <section class="panel p-6 fade-up" style="animation-delay: 480ms">
-          <h2 class="text-lg font-medium mb-1">Share by owner</h2>
-          <p class="text-xs text-zinc-500 mb-4">Who's dominating the slideshow.</p>
-          <OwnerBars data={summary.perOwner} />
-        </section>
-      </div>
+      <section class="panel p-6 mb-8 fade-up" style="animation-delay: 480ms">
+        <h2 class="text-lg font-medium mb-1">Share by owner over time</h2>
+        <p class="text-xs text-zinc-500 mb-4">Stacked daily share — who's dominating the slideshow.</p>
+        {#if dailyByOwner && dailyByOwner.owners.length > 0}
+          <OwnerDailyChart data={dailyByOwner} />
+        {:else}
+          <div class="text-sm text-zinc-500 italic">No owner data in this range.</div>
+        {/if}
+      </section>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
         {#if memoryDeck}

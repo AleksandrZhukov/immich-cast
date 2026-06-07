@@ -16,6 +16,11 @@ export type CaptureCell = { year: number; doy: number; count: number };
 
 export type CaptureSpread = { minYear: number; maxYear: number; cells: CaptureCell[] };
 
+export type DailyByOwner = {
+  owners: Array<{ ownerId: string; ownerName: string; total: number }>;
+  days: Array<{ date: string; byOwner: Record<string, number> }>;
+};
+
 export type CastEventRow = { ts: string; kind: string; detail?: string };
 
 export type MemoryDeck = {
@@ -35,6 +40,8 @@ export const api = {
     axios.get<Summary>('/api/stats/summary', { params: rangeQuery(range) }).then((r) => r.data),
   daily: (range: { from: Date; to: Date }) =>
     axios.get<DailyPoint[]>('/api/stats/daily', { params: rangeQuery(range) }).then((r) => r.data),
+  dailyByOwner: (range: { from: Date; to: Date }) =>
+    axios.get<DailyByOwner>('/api/stats/daily-by-owner', { params: rangeQuery(range) }).then((r) => r.data),
   captureSpread: (range: { from: Date; to: Date }) =>
     axios.get<CaptureSpread>('/api/stats/capture-spread', { params: rangeQuery(range) }).then((r) => r.data),
   castEvents: (range: { from: Date; to: Date }) =>

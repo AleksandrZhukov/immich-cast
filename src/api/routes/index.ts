@@ -5,7 +5,14 @@ import { fetchSlides, getMemoryDeckStats } from '../services/slides';
 import { getCurrentWeather } from '../services/weather';
 import { env } from '../config/env';
 import { AxiosError } from 'axios';
-import { getSummary, getDaily, getCaptureSpread, getCastEvents, listKnownDays } from '../stats/aggregator';
+import {
+  getSummary,
+  getDaily,
+  getDailyByOwner,
+  getCaptureSpread,
+  getCastEvents,
+  listKnownDays,
+} from '../stats/aggregator';
 
 function parseRange(from?: string, to?: string): { from: Date; to: Date } {
   const toDate = to ? new Date(to) : new Date();
@@ -89,6 +96,14 @@ export const registerRoutes = (server: FastifyInstance) => {
         async (request: FastifyRequest<{ Querystring: { from?: string; to?: string } }>, res) => {
           const range = parseRange(request.query.from, request.query.to);
           res.send(await getDaily(range));
+        },
+      );
+
+      instance.get(
+        '/stats/daily-by-owner',
+        async (request: FastifyRequest<{ Querystring: { from?: string; to?: string } }>, res) => {
+          const range = parseRange(request.query.from, request.query.to);
+          res.send(await getDailyByOwner(range));
         },
       );
 

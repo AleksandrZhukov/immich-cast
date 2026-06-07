@@ -173,6 +173,35 @@ function dayOfYear(d: Date): number {
   return Math.floor(diff / 86_400_000);
 }
 
+export type DailyByOwner = {
+  owners: Array<{ ownerId: string; ownerName: string; total: number }>;
+  days: Array<{ date: string; byOwner: Record<string, number> }>;
+};
+
+export async function getDailyByOwner(range: DateRange): Promise<DailyByOwner> {
+  const ownerNames = new Map<string, string>();
+  const ownerTotals = new Map<string, number>();
+  const days: DailyByOwner['days'] = [];
+
+  for (const day of daysInRange(range)) {
+    const events = await readDay(day);
+    const byOwner: Record<string, number> = {};
+    for (const e of events) {
+      if (e.type !== 'slide_served') continue;
+      ownerNames.set(e.ownerId, e.ownerName);
+      ownerTotals.set(e.ownerId, (ownerTotals.get(e.ownerId) ?? 0) + 1);
+      byOwner[e.ownerId] = (byOwner[e.ownerId] ?? 0) + 1;
+    }
+    days.push({ date: day, byOwner });
+  }
+
+  const owners = [...ownerTotals.entries()]
+    .map(([id, total]) => ({ ownerId: id, ownerName: ownerNames.get(id) || 'Unknown', total }))
+    .sort((a, b) => b.total - a.total);
+
+  return { owners, days };
+}
+
 export type CastEventRow = {
   ts: string;
   kind: string;
