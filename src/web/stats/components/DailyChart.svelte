@@ -126,7 +126,7 @@
 
   {#if hover}
     <div
-      class="absolute pointer-events-none panel px-3 py-2 text-xs"
+      class="absolute pointer-events-none tooltip px-3 py-2 text-xs"
       style="left: {hover.x}px; top: 0; transform: translateX(-50%);"
     >
       <div class="mono text-zinc-300">{data[hover.i].date}</div>

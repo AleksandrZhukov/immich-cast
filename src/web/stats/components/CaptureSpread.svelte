@@ -135,7 +135,7 @@
 
   {#if hovered}
     <div
-      class="fixed pointer-events-none z-50 panel px-3 py-2 text-xs"
+      class="fixed pointer-events-none z-50 tooltip px-3 py-2 text-xs"
       style="left: {hovered.x}px; top: {hovered.y - 56}px; transform: translateX(-50%);"
     >
       <div class="mono text-zinc-300">{formatDate(dayOfYearToDate(hovered.year, hovered.doy))}</div>

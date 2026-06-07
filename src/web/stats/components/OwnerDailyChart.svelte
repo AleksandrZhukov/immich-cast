@@ -162,7 +162,7 @@
     {@const day = data.days[hoverIdx]}
     {@const total = totalsPerDay[hoverIdx]}
     <div
-      class="absolute pointer-events-none panel px-3 py-2 text-xs min-w-[180px]"
+      class="absolute pointer-events-none tooltip px-3 py-2 text-xs min-w-[180px]"
       style="left: {Math.min(w - 200, Math.max(0, x(hoverIdx) - 90))}px; top: 0;"
     >
       <div class="mono text-zinc-300 mb-1">{day.date}</div>
