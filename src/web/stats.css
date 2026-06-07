@@ -31,12 +31,6 @@
     backdrop-filter: blur(8px);
   }
 
-  .panel-glow {
-    box-shadow:
-      0 0 0 1px rgba(125, 211, 252, 0.08),
-      0 20px 60px -20px rgba(125, 211, 252, 0.15);
-  }
-
   .text-accent {
     color: #7dd3fc;
   }

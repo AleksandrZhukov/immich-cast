@@ -117,7 +117,7 @@
       </section>
 
       {#if captureSpread && captureSpread.cells.length > 0}
-        <section class="panel panel-glow p-6 mb-8 fade-up" style="animation-delay: 320ms">
+        <section class="panel p-6 mb-8 fade-up" style="animation-delay: 320ms">
           <div class="flex items-baseline justify-between mb-1">
             <h2 class="text-lg font-medium">Photos by capture date</h2>
             <div class="mono text-xs text-zinc-500">
