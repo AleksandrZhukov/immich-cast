@@ -1,6 +1,15 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { CaptureSpread, CastEventRow, DailyByOwner, DailyPoint, MemoryDeck, Summary } from './lib/api';
+  import type {
+    CaptureSpread,
+    CastEventRow,
+    DailyByOwner,
+    DailyPoint,
+    MemoryDeck,
+    Summary,
+    WeatherDailyRow,
+    WeatherPoint,
+  } from './lib/api';
   import { api } from './lib/api';
   import StatCard from './components/StatCard.svelte';
   import RangePicker, { type RangeKey } from './components/RangePicker.svelte';
@@ -10,6 +19,7 @@
   import CaptureYearBars from './components/CaptureYearBars.svelte';
   import MemoryDeckPanel from './components/MemoryDeckPanel.svelte';
   import CastEventsLog from './components/CastEventsLog.svelte';
+  import WeatherPanel from './components/WeatherPanel.svelte';
 
   let rangeKey = $state<RangeKey>('30d');
   let summary = $state<Summary | null>(null);
@@ -18,6 +28,8 @@
   let captureSpread = $state<CaptureSpread | null>(null);
   let castEvents = $state<CastEventRow[]>([]);
   let memoryDeck = $state<MemoryDeck | null>(null);
+  let weatherSeries = $state<WeatherPoint[]>([]);
+  let weatherDaily = $state<WeatherDailyRow[]>([]);
   let loading = $state(true);
   let knownDays = $state<string[]>([]);
 
@@ -36,13 +48,15 @@
   async function load() {
     loading = true;
     const range = await rangeFor(rangeKey);
-    const [s, d, dbo, sp, ce, md] = await Promise.all([
+    const [s, d, dbo, sp, ce, md, ws, wd] = await Promise.all([
       api.summary(range),
       api.daily(range),
       api.dailyByOwner(range),
       api.captureSpread(range),
       api.castEvents(range),
       api.memoryDeck(),
+      api.weather(range),
+      api.weatherDaily(range),
     ]);
     summary = s;
     daily = d;
@@ -50,6 +64,8 @@
     captureSpread = sp;
     castEvents = ce;
     memoryDeck = md;
+    weatherSeries = ws;
+    weatherDaily = wd;
     loading = false;
   }
 
@@ -170,10 +186,18 @@
         </section>
       </div>
 
-      <section class="panel p-6 fade-up" style="animation-delay: 720ms">
+      <section class="panel p-6 mb-4 fade-up" style="animation-delay: 720ms">
         <h2 class="text-lg font-medium mb-1">Cast monitor</h2>
         <p class="text-xs text-zinc-500 mb-4">Recent events from the Chromecast watcher.</p>
         <CastEventsLog data={castEvents} />
+      </section>
+
+      <section class="panel p-6 fade-up" style="animation-delay: 800ms">
+        <h2 class="text-lg font-medium mb-1">Weather &amp; air quality</h2>
+        <p class="text-xs text-zinc-500 mb-4">
+          Sampled once per slideshow weather poll. AQI bands shade the Air Quality category zones.
+        </p>
+        <WeatherPanel series={weatherSeries} daily={weatherDaily} />
       </section>
 
       <footer class="mt-8 mono text-xs text-zinc-600 text-center">

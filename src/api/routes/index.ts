@@ -11,8 +11,11 @@ import {
   getDailyByOwner,
   getCaptureSpread,
   getCastEvents,
+  getWeatherSeries,
+  getWeatherDaily,
   listKnownDays,
 } from '../stats/aggregator';
+import { recordWeatherSample } from '../stats/recorder';
 
 function parseRange(from?: string, to?: string): { from: Date; to: Date } {
   const toDate = to ? new Date(to) : new Date();
@@ -80,6 +83,15 @@ export const registerRoutes = (server: FastifyInstance) => {
 
       instance.get('/weather', async (_, res) => {
         const weather = await getCurrentWeather();
+        if (weather) {
+          recordWeatherSample({
+            temperature: weather.temperature,
+            aqi: weather.aqi,
+            humidity: weather.humidity,
+            icon: weather.icon,
+            windSpeed: weather.wind.speed,
+          });
+        }
         res.send(weather);
       });
 
@@ -121,6 +133,23 @@ export const registerRoutes = (server: FastifyInstance) => {
           const range = parseRange(request.query.from, request.query.to);
           const limit = request.query.limit ? Number(request.query.limit) : 200;
           res.send(await getCastEvents(range, limit));
+        },
+      );
+
+      instance.get(
+        '/stats/weather',
+        async (request: FastifyRequest<{ Querystring: { from?: string; to?: string; points?: string } }>, res) => {
+          const range = parseRange(request.query.from, request.query.to);
+          const points = request.query.points ? Number(request.query.points) : 200;
+          res.send(await getWeatherSeries(range, points));
+        },
+      );
+
+      instance.get(
+        '/stats/weather-daily',
+        async (request: FastifyRequest<{ Querystring: { from?: string; to?: string } }>, res) => {
+          const range = parseRange(request.query.from, request.query.to);
+          res.send(await getWeatherDaily(range));
         },
       );
 

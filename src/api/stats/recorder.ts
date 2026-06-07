@@ -21,7 +21,17 @@ type CastEvent = {
   detail?: string;
 };
 
-export type Event = SlideServedEvent | CastEvent;
+type WeatherSample = {
+  type: 'weather_sample';
+  ts: string;
+  temperature: number;
+  aqi: number;
+  humidity: number;
+  icon: string;
+  windSpeed: number;
+};
+
+export type Event = SlideServedEvent | CastEvent | WeatherSample;
 
 let ensureDirPromise: Promise<void> | null = null;
 async function ensureDir(): Promise<void> {
@@ -54,6 +64,10 @@ export function recordSlideServed(input: Omit<SlideServedEvent, 'type' | 'ts'>):
 
 export function recordCastEvent(kind: CastEvent['kind'], detail?: string): void {
   void append({ type: 'cast_event', ts: new Date().toISOString(), kind, detail });
+}
+
+export function recordWeatherSample(input: Omit<WeatherSample, 'type' | 'ts'>): void {
+  void append({ type: 'weather_sample', ts: new Date().toISOString(), ...input });
 }
 
 export { DATA_DIR };

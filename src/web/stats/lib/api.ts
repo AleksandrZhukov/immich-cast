@@ -23,6 +23,26 @@ export type DailyByOwner = {
 
 export type CastEventRow = { ts: string; kind: string; detail?: string };
 
+export type WeatherPoint = {
+  ts: string;
+  temperature: number;
+  aqi: number;
+  humidity: number;
+  icon: string;
+  windSpeed: number;
+};
+
+export type WeatherDailyRow = {
+  date: string;
+  tempMin: number | null;
+  tempMax: number | null;
+  tempAvg: number | null;
+  aqiAvg: number | null;
+  aqiMax: number | null;
+  dominantIcon: string | null;
+  samples: number;
+};
+
 export type MemoryDeck = {
   total: number;
   shown: number;
@@ -48,4 +68,10 @@ export const api = {
     axios.get<CastEventRow[]>('/api/stats/cast-events', { params: rangeQuery(range) }).then((r) => r.data),
   memoryDeck: () => axios.get<MemoryDeck>('/api/stats/memory-deck').then((r) => r.data),
   knownDays: () => axios.get<string[]>('/api/stats/known-days').then((r) => r.data),
+  weather: (range: { from: Date; to: Date }, points = 200) =>
+    axios
+      .get<WeatherPoint[]>('/api/stats/weather', { params: { ...rangeQuery(range), points } })
+      .then((r) => r.data),
+  weatherDaily: (range: { from: Date; to: Date }) =>
+    axios.get<WeatherDailyRow[]>('/api/stats/weather-daily', { params: rangeQuery(range) }).then((r) => r.data),
 };

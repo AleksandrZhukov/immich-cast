@@ -208,6 +208,92 @@ export type CastEventRow = {
   detail?: string;
 };
 
+export type WeatherPoint = {
+  ts: string;
+  temperature: number;
+  aqi: number;
+  humidity: number;
+  icon: string;
+  windSpeed: number;
+};
+
+export async function getWeatherSeries(range: DateRange, maxPoints = 200): Promise<WeatherPoint[]> {
+  const events = await readRange(range);
+  const samples: WeatherPoint[] = [];
+  for (const e of events) {
+    if (e.type === 'weather_sample') {
+      samples.push({
+        ts: e.ts,
+        temperature: e.temperature,
+        aqi: e.aqi,
+        humidity: e.humidity,
+        icon: e.icon,
+        windSpeed: e.windSpeed,
+      });
+    }
+  }
+  if (samples.length <= maxPoints) return samples;
+  const stride = samples.length / maxPoints;
+  const out: WeatherPoint[] = [];
+  for (let i = 0; i < maxPoints; i++) out.push(samples[Math.floor(i * stride)]);
+  out.push(samples[samples.length - 1]);
+  return out;
+}
+
+export type WeatherDailyRow = {
+  date: string;
+  tempMin: number | null;
+  tempMax: number | null;
+  tempAvg: number | null;
+  aqiAvg: number | null;
+  aqiMax: number | null;
+  dominantIcon: string | null;
+  samples: number;
+};
+
+export async function getWeatherDaily(range: DateRange): Promise<WeatherDailyRow[]> {
+  const out: WeatherDailyRow[] = [];
+  for (const day of daysInRange(range)) {
+    const events = await readDay(day);
+    let tempMin = Infinity;
+    let tempMax = -Infinity;
+    let tempSum = 0;
+    let aqiSum = 0;
+    let aqiMax = -Infinity;
+    let count = 0;
+    const iconCounts = new Map<string, number>();
+    for (const e of events) {
+      if (e.type !== 'weather_sample') continue;
+      count++;
+      tempMin = Math.min(tempMin, e.temperature);
+      tempMax = Math.max(tempMax, e.temperature);
+      tempSum += e.temperature;
+      aqiSum += e.aqi;
+      aqiMax = Math.max(aqiMax, e.aqi);
+      iconCounts.set(e.icon, (iconCounts.get(e.icon) ?? 0) + 1);
+    }
+    let dominantIcon: string | null = null;
+    let best = 0;
+    for (const [icon, n] of iconCounts) {
+      if (n > best) {
+        best = n;
+        dominantIcon = icon;
+      }
+    }
+    out.push({
+      date: day,
+      tempMin: count > 0 ? tempMin : null,
+      tempMax: count > 0 ? tempMax : null,
+      tempAvg: count > 0 ? tempSum / count : null,
+      aqiAvg: count > 0 ? aqiSum / count : null,
+      aqiMax: count > 0 ? aqiMax : null,
+      dominantIcon,
+      samples: count,
+    });
+  }
+  return out;
+}
+
 export async function getCastEvents(range: DateRange, limit = 200): Promise<CastEventRow[]> {
   const events = await readRange(range);
   const out: CastEventRow[] = [];
