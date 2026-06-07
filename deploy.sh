@@ -20,7 +20,7 @@ rsync -az --delete \
   --exclude='.env' \
   --exclude='.idea' \
   --exclude='.vscode' \
-  ./src ./package.json ./package-lock.json \
+  ./src ./package.json ./bun.lock \
   ./tsconfig.json ./tsconfig.app.json ./tsconfig.node.json \
   ./docker-compose.yml \
   "${HOMELAB_HOST}:${HOMELAB_PATH}/"
