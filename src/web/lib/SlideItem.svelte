@@ -8,31 +8,31 @@
     class: className,
     isPortrait,
     isActive = false,
+    isArchived = false,
     duration = 30000,
-    onArchivePromptChange,
+    onArchiveRequest,
   } = $props<{
     image: ImageInfo;
     class?: string;
     isPortrait?: boolean;
     isActive?: boolean;
+    isArchived?: boolean;
     duration?: number;
-    onArchivePromptChange?: (open: boolean) => void;
+    onArchiveRequest?: (image: ImageInfo) => void;
   }>();
 
   let imageLocation = $state<string | null>();
-  let isArchived = $state(false);
 
   const LONG_PRESS_MS = 700;
   const MOVE_CANCEL_PX = 10;
 
   let pressProgress = $state(0);
-  let confirmingArchive = $state(false);
   let pressTimer: ReturnType<typeof setTimeout> | null = null;
   let pressRaf = 0;
   let pressStart = { x: 0, y: 0 };
 
   function startPress(x: number, y: number) {
-    if (isArchived || confirmingArchive || !isActive) return;
+    if (isArchived || !isActive) return;
     pressStart = { x, y };
     const startedAt = performance.now();
     const tick = () => {
@@ -42,8 +42,7 @@
     pressRaf = requestAnimationFrame(tick);
     pressTimer = setTimeout(() => {
       cancelPress();
-      confirmingArchive = true;
-      onArchivePromptChange?.(true);
+      onArchiveRequest?.(image);
     }, LONG_PRESS_MS);
   }
 
@@ -80,15 +79,6 @@
     movePress(e.clientX, e.clientY);
   }
 
-  function dismissArchive() {
-    confirmingArchive = false;
-    onArchivePromptChange?.(false);
-  }
-  async function confirmArchive() {
-    dismissArchive();
-    await archiveImage();
-  }
-
   // Ken Burns: pick a target zoom + pan once per slide. Translate is clamped to
   // (endScale-1)/2 so the panned image still covers the frame without edges.
   const endScale = 1.18 + Math.random() * 0.12;
@@ -118,15 +108,6 @@
         });
     }
   }
-
-  const archiveImage = async () => {
-    try {
-      await axios.post(`/api/images/${image.id}/archive`);
-      isArchived = true;
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   const getAvatarBg = (color: string) => {
     switch (color) {
@@ -201,7 +182,7 @@
     </div>
   </div>
 
-  {#if pressProgress > 0.15 && !confirmingArchive}
+  {#if pressProgress > 0.15}
     <div class="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
       <div
         class="bg-black/60 backdrop-blur-sm text-white text-sm font-light px-4 py-2 rounded-full flex items-center gap-2"
@@ -226,37 +207,4 @@
     </div>
   {/if}
 
-  {#if confirmingArchive}
-    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-    <div
-      class="absolute inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onclick={dismissArchive}
-      ontouchstart={(e) => e.stopPropagation()}
-      ontouchmove={(e) => e.stopPropagation()}
-    >
-      <div
-        class="bg-white/95 text-black rounded-2xl px-6 py-5 max-w-xs text-center shadow-2xl"
-        role="dialog"
-        tabindex="-1"
-        onclick={(e) => e.stopPropagation()}
-      >
-        <div class="text-xl font-medium mb-1">Archive this photo?</div>
-        <div class="text-sm text-gray-600 mb-5">It will be hidden from the slideshow.</div>
-        <div class="flex gap-3 justify-center">
-          <button
-            class="px-5 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-base font-medium"
-            onclick={dismissArchive}
-          >
-            Cancel
-          </button>
-          <button
-            class="px-5 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-base font-medium"
-            onclick={confirmArchive}
-          >
-            Archive
-          </button>
-        </div>
-      </div>
-    </div>
-  {/if}
 </div>

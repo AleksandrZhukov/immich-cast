@@ -2,7 +2,8 @@
   import { onMount, onDestroy } from 'svelte';
   import axios from 'redaxios';
   import SlideItem from './SlideItem.svelte';
-  import { type Slide, SlideType } from './types';
+  import ArchiveConfirmDialog from './ArchiveConfirmDialog.svelte';
+  import { type ImageInfo, type Slide, SlideType } from './types';
 
   const { slideInterval = 10000 } = $props();
   const LOAD_THRESHOLD = 2;
@@ -18,7 +19,8 @@
   let touchEndX = $state(0);
   let isDragging = $state(false);
   let dragOffset = $state(0);
-  let archivePromptOpen = $state(false);
+  let archiveCandidate = $state<ImageInfo | null>(null);
+  let archivedIds = $state(new Set<string>());
 
   let intervalId: number;
   let mounted = false;
@@ -94,19 +96,33 @@
 
   function startSlideInterval() {
     if (intervalId) clearInterval(intervalId);
-    if (archivePromptOpen) return;
+    if (archiveCandidate) return;
     intervalId = setInterval(() => nextSlide(true), slideInterval) as unknown as number;
   }
 
-  function onArchivePromptChange(open: boolean) {
-    archivePromptOpen = open;
-    if (open) {
-      if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = 0;
-      }
-    } else {
-      startSlideInterval();
+  function onArchiveRequest(image: ImageInfo) {
+    archiveCandidate = image;
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = 0;
+    }
+  }
+
+  function dismissArchive() {
+    archiveCandidate = null;
+    startSlideInterval();
+  }
+
+  async function confirmArchive() {
+    const target = archiveCandidate;
+    archiveCandidate = null;
+    startSlideInterval();
+    if (!target) return;
+    try {
+      await axios.post(`/api/images/${target.id}/archive`);
+      archivedIds = new Set([...archivedIds, target.id]);
+    } catch (e) {
+      console.error('Error archiving image:', e);
     }
   }
 
@@ -250,15 +266,17 @@
                 image={image.items[0]}
                 class="flex-1 h-full"
                 isActive={index === currentIndex}
+                isArchived={archivedIds.has(image.items[0].id)}
                 duration={slideInterval}
-                {onArchivePromptChange}
+                {onArchiveRequest}
               />
               <SlideItem
                 image={image.items[1]}
                 class="flex-1 h-full"
                 isActive={index === currentIndex}
+                isArchived={archivedIds.has(image.items[1].id)}
                 duration={slideInterval}
-                {onArchivePromptChange}
+                {onArchiveRequest}
               />
             </div>
           {:else}
@@ -267,8 +285,9 @@
               class="w-full h-full"
               isPortrait={image.isPortrait}
               isActive={index === currentIndex}
+              isArchived={archivedIds.has(image.items[0].id)}
               duration={slideInterval}
-              {onArchivePromptChange}
+              {onArchiveRequest}
             />
           {/if}
         </div>
@@ -281,4 +300,6 @@
       {/if}
     </div>
   {/if}
+
+  <ArchiveConfirmDialog open={archiveCandidate !== null} onConfirm={confirmArchive} onCancel={dismissArchive} />
 </div>
