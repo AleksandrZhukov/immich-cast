@@ -112,6 +112,7 @@ export class MemoryDeck {
       id: info.id,
       width: exif.exifImageWidth || 0,
       height: exif.exifImageHeight || 0,
+      ownerId: info.ownerId,
       ownerName: info.owner?.name || 'Unknown',
       ownerAvatarColor: info.owner?.avatarColor || 'gray',
       fileCreatedAt: info.fileCreatedAt,

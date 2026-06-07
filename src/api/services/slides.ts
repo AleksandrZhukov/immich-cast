@@ -2,11 +2,13 @@ import { fetchAssetInfo, fetchRandomImages } from './immich';
 import { type AssetResponseDto, ExifOrientation } from '../../types';
 import { ImageHistoryTracker } from '../utils/imageHistory';
 import { MemoryDeck } from '../utils/memoryDeck';
+import { recordSlideServed } from '../stats/recorder';
 
 export interface ImageInfo {
   id: string;
   width: number;
   height: number;
+  ownerId: string;
   ownerName: string;
   ownerAvatarColor: string;
   fileCreatedAt: string;
@@ -40,6 +42,10 @@ const memoryDeck = new MemoryDeck();
 
 let memoryDeckInitPromise: Promise<void> | null = null;
 let slideFetchCount = 0;
+
+export function getMemoryDeckStats() {
+  return memoryDeck.getStats();
+}
 
 function ensureMemoryDeck(): Promise<void> {
   if (!memoryDeckInitPromise) {
@@ -99,6 +105,7 @@ async function fetchGeneralImages(count: number): Promise<ImageInfo[]> {
         id: info.id,
         width: exif.exifImageWidth || 0,
         height: exif.exifImageHeight || 0,
+        ownerId: info.ownerId,
         ownerName: info.owner?.name || 'Unknown',
         ownerAvatarColor: info.owner?.avatarColor || 'gray',
         fileCreatedAt: info.fileCreatedAt,
@@ -144,6 +151,17 @@ export async function fetchSlides(): Promise<Slide[]> {
   ]);
 
   const infos = interleave(generalImages, memoryImages);
+
+  for (const info of infos) {
+    recordSlideServed({
+      imageId: info.id,
+      ownerId: info.ownerId,
+      ownerName: info.ownerName,
+      capturedAt: info.fileCreatedAt || null,
+      isMemory: info.yearsAgo !== undefined,
+      yearsAgo: info.yearsAgo,
+    });
+  }
 
   const slides: Slide[] = [];
 

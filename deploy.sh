@@ -13,6 +13,7 @@ ssh "${HOMELAB_HOST}" "mkdir -p ${HOMELAB_PATH}"
 rsync -az --delete \
   --exclude='node_modules' \
   --exclude='dist' \
+  --exclude='data' \
   --exclude='.git' \
   --exclude='.DS_Store' \
   --exclude='*.log' \

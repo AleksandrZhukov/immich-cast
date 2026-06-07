@@ -1,10 +1,17 @@
 import { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { fetchRandomImages, getAssetBuffer, archiveAsset } from '../services/immich';
 import { reverseGeocode } from '../services/geocoding';
-import { fetchSlides } from '../services/slides';
+import { fetchSlides, getMemoryDeckStats } from '../services/slides';
 import { getCurrentWeather } from '../services/weather';
 import { env } from '../config/env';
 import { AxiosError } from 'axios';
+import { getSummary, getDaily, getCaptureSpread, getCastEvents, listKnownDays } from '../stats/aggregator';
+
+function parseRange(from?: string, to?: string): { from: Date; to: Date } {
+  const toDate = to ? new Date(to) : new Date();
+  const fromDate = from ? new Date(from) : new Date(toDate.getTime() - 29 * 86_400_000);
+  return { from: fromDate, to: toDate };
+}
 
 export const registerRoutes = (server: FastifyInstance) => {
   server.register(
@@ -67,6 +74,47 @@ export const registerRoutes = (server: FastifyInstance) => {
       instance.get('/weather', async (_, res) => {
         const weather = await getCurrentWeather();
         res.send(weather);
+      });
+
+      instance.get(
+        '/stats/summary',
+        async (request: FastifyRequest<{ Querystring: { from?: string; to?: string } }>, res) => {
+          const range = parseRange(request.query.from, request.query.to);
+          res.send(await getSummary(range));
+        },
+      );
+
+      instance.get(
+        '/stats/daily',
+        async (request: FastifyRequest<{ Querystring: { from?: string; to?: string } }>, res) => {
+          const range = parseRange(request.query.from, request.query.to);
+          res.send(await getDaily(range));
+        },
+      );
+
+      instance.get(
+        '/stats/capture-spread',
+        async (request: FastifyRequest<{ Querystring: { from?: string; to?: string } }>, res) => {
+          const range = parseRange(request.query.from, request.query.to);
+          res.send(await getCaptureSpread(range));
+        },
+      );
+
+      instance.get(
+        '/stats/cast-events',
+        async (request: FastifyRequest<{ Querystring: { from?: string; to?: string; limit?: string } }>, res) => {
+          const range = parseRange(request.query.from, request.query.to);
+          const limit = request.query.limit ? Number(request.query.limit) : 200;
+          res.send(await getCastEvents(range, limit));
+        },
+      );
+
+      instance.get('/stats/memory-deck', async (_, res) => {
+        res.send(getMemoryDeckStats());
+      });
+
+      instance.get('/stats/known-days', async (_, res) => {
+        res.send(await listKnownDays());
       });
 
       next();

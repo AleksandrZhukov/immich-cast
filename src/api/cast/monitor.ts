@@ -1,5 +1,6 @@
 import { Client, type Channel, type ApplicationInfo, type ReceiverStatusMessage, type ReceiverMessage } from 'castv2';
 import { env } from '../config/env';
+import { recordCastEvent } from '../stats/recorder';
 
 const CHROMECAST_IP = env.cast.ip;
 const APP_ID = env.cast.appId;
@@ -71,6 +72,7 @@ export const startMonitoring = async () => {
     try {
       client = await connectClient(CHROMECAST_IP);
       console.log('[cast] ✅ Connected to Chromecast');
+      recordCastEvent('connected');
 
       const connection = client.createChannel(
         'sender-0',
@@ -91,6 +93,7 @@ export const startMonitoring = async () => {
         if (!isWithinTimeRange()) {
           if (app?.appId === APP_ID) {
             console.log('[cast] 🛑 Outside allowed hours, stopping app');
+            recordCastEvent('outside_hours_stop');
             receiver.send({ type: 'STOP', sessionId: app.sessionId, requestId: ++requestCounter });
           }
           return;
@@ -101,6 +104,7 @@ export const startMonitoring = async () => {
           if (isIdleCount === IDLE_CONFIRMATION_ATTEMPTS) {
             isIdleCount = 0;
             console.log('[cast] 🔄 Idle confirmed, relaunching...');
+            recordCastEvent('idle_relaunch');
             const currentVolume = data.status?.volume?.level;
             await launchApp(receiver, currentVolume);
           }
@@ -140,6 +144,7 @@ export const startMonitoring = async () => {
       client = null;
       await delay(2000);
       console.log('[cast] 🔁 Reconnecting...');
+      recordCastEvent('reconnect');
     }
   }
 };
