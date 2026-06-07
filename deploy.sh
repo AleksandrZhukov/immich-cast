@@ -33,4 +33,7 @@ if ! ssh "${HOMELAB_HOST}" "test -f ${HOMELAB_PATH}/.env"; then
   exit 1
 fi
 
-echo ">> Done. Stack is managed by Dockhand — point it at ${HOMELAB_PATH}/docker-compose.yml"
+echo ">> Recreating container"
+ssh "${HOMELAB_HOST}" "cd ${HOMELAB_PATH} && docker compose up -d --force-recreate"
+
+echo ">> Done."
