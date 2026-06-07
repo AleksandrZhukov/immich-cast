@@ -3,10 +3,39 @@
   import axios from 'redaxios';
   import { type ImageInfo } from './types';
 
-  const { image, class: className, isPortrait } = $props<{ image: ImageInfo; class?: string; isPortrait?: boolean }>();
+  const {
+    image,
+    class: className,
+    isPortrait,
+    isActive = false,
+    duration = 30000,
+  } = $props<{
+    image: ImageInfo;
+    class?: string;
+    isPortrait?: boolean;
+    isActive?: boolean;
+    duration?: number;
+  }>();
 
   let imageLocation = $state<string | null>();
   let isArchived = $state(false);
+
+  // Ken Burns: pick a target zoom + pan once per slide. Translate is clamped to
+  // (endScale-1)/2 so the panned image still covers the frame without edges.
+  const endScale = 1.08 + Math.random() * 0.07;
+  const maxTranslate = (endScale - 1) * 50 * 0.8;
+  const endX = (Math.random() - 0.5) * 2 * maxTranslate;
+  const endY = (Math.random() - 0.5) * 2 * maxTranslate;
+
+  let panActive = $state(false);
+
+  $effect(() => {
+    if (isActive && !panActive) {
+      requestAnimationFrame(() => {
+        panActive = true;
+      });
+    }
+  });
 
   function onLoadImage() {
     if (!imageLocation && image.latitude && image.longitude) {
@@ -50,9 +79,14 @@
       .join('');
 </script>
 
-<div class="{className || ''} flex-shrink-0 relative {isArchived ? 'opacity-30' : ''}">
+<div class="{className || ''} flex-shrink-0 relative overflow-hidden {isArchived ? 'opacity-30' : ''}">
   <img
     class="w-full h-full {isPortrait ? 'object-contain' : 'object-cover'}"
+    style="
+      transform: {panActive ? `scale(${endScale}) translate(${endX}%, ${endY}%)` : 'scale(1)'};
+      transition: transform {duration + 2000}ms ease-out;
+      will-change: transform;
+    "
     src={`/api/images/${image.id}`}
     alt={`Image ${image.id}`}
     loading="lazy"

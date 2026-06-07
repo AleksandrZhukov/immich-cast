@@ -232,11 +232,27 @@
         >
           {#if image.type === SlideType.DOUBLE}
             <div class="flex w-full h-full gap-2">
-              <SlideItem image={image.items[0]} class="flex-1 h-full" />
-              <SlideItem image={image.items[1]} class="flex-1 h-full" />
+              <SlideItem
+                image={image.items[0]}
+                class="flex-1 h-full"
+                isActive={index === currentIndex}
+                duration={slideInterval}
+              />
+              <SlideItem
+                image={image.items[1]}
+                class="flex-1 h-full"
+                isActive={index === currentIndex}
+                duration={slideInterval}
+              />
             </div>
           {:else}
-            <SlideItem image={image.items[0]} class="w-full h-full" isPortrait={image.isPortrait} />
+            <SlideItem
+              image={image.items[0]}
+              class="w-full h-full"
+              isPortrait={image.isPortrait}
+              isActive={index === currentIndex}
+              duration={slideInterval}
+            />
           {/if}
         </div>
       {/each}
