@@ -31,15 +31,18 @@
 
   const maxTotal = $derived(Math.max(1, ...totalsPerDay));
 
+  const slotW = $derived(innerW / Math.max(1, data.days.length));
+  const barW = $derived(Math.max(1.5, slotW * 0.85));
+
   function x(i: number): number {
-    if (data.days.length <= 1) return PAD.left;
-    return PAD.left + (i / (data.days.length - 1)) * innerW;
+    return PAD.left + slotW * (i + 0.5);
   }
   function y(v: number): number {
     return PAD.top + innerH - (v / maxTotal) * innerH;
   }
 
-  type Band = { ownerId: string; ownerName: string; color: string; total: number; path: string };
+  type Rect = { xi: number; bottomVal: number; topVal: number };
+  type Band = { ownerId: string; ownerName: string; color: string; total: number; rects: Rect[] };
 
   const bands = $derived.by(() => {
     const result: Band[] = [];
@@ -49,29 +52,20 @@
       const ownerId = stackOrder[oi];
       const owner = data.owners.find((o: { ownerId: string }) => o.ownerId === ownerId);
       if (!owner) continue;
-      const top: number[] = [];
+
+      const rects: Rect[] = [];
       for (let i = 0; i < data.days.length; i++) {
         const v = data.days[i].byOwner[ownerId] ?? 0;
+        if (v > 0) rects.push({ xi: i, bottomVal: cumulative[i], topVal: cumulative[i] + v });
         cumulative[i] += v;
-        top.push(cumulative[i]);
       }
-      const bottom = cumulative.map((c: number, i: number) => c - (data.days[i].byOwner[ownerId] ?? 0));
-
-      let d = '';
-      for (let i = 0; i < top.length; i++) {
-        d += `${i === 0 ? 'M' : 'L'} ${x(i)} ${y(top[i])} `;
-      }
-      for (let i = top.length - 1; i >= 0; i--) {
-        d += `L ${x(i)} ${y(bottom[i])} `;
-      }
-      d += 'Z';
 
       result.push({
         ownerId,
         ownerName: owner.ownerName,
         color: ownerColor(oi),
         total: owner.total,
-        path: d,
+        rects,
       });
     }
     return result;
@@ -95,7 +89,7 @@
     if (!data.days.length) return;
     const rect = (e.currentTarget as SVGElement).getBoundingClientRect();
     const px = e.clientX - rect.left;
-    const idx = Math.round(((px - PAD.left) / innerW) * (data.days.length - 1));
+    const idx = Math.floor((px - PAD.left) / slotW);
     hoverIdx = Math.max(0, Math.min(data.days.length - 1, idx));
   }
 </script>
@@ -124,15 +118,19 @@
     {/each}
 
     {#each bands as band, i}
-      <path
-        d={band.path}
-        fill={band.color}
-        fill-opacity="0.7"
-        stroke={band.color}
-        stroke-width="1"
-        stroke-opacity="0.9"
-        style="animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; animation-delay: {i * 80}ms;"
-      />
+      <g style="animation: fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both; animation-delay: {i * 80}ms;">
+        {#each band.rects as rect}
+          <rect
+            x={x(rect.xi) - barW / 2}
+            y={y(rect.topVal)}
+            width={barW}
+            height={Math.max(1, y(rect.bottomVal) - y(rect.topVal))}
+            fill={band.color}
+            fill-opacity={hoverIdx === null || hoverIdx === rect.xi ? 0.9 : 0.45}
+            rx="1"
+          />
+        {/each}
+      </g>
     {/each}
 
     {#each ticks as t}
