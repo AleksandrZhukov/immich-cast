@@ -93,7 +93,7 @@
     <!-- month grid -->
     {#each Array(12) as _, m}
       {@const x = LABEL_W + monthTick(m, data.minYear) * dayW}
-      <line {x} y1={TOP_PAD - 8} x2={x} y2={height - BOTTOM_PAD} stroke="rgba(255,255,255,0.04)" stroke-width="1" />
+      <line x1={x} y1={TOP_PAD - 8} x2={x} y2={height - BOTTOM_PAD} stroke="rgba(255,255,255,0.04)" stroke-width="1" />
       <text {x} y={TOP_PAD - 12} fill="#52525b" font-size="10" font-family="JetBrains Mono">{monthName(m)}</text>
     {/each}
 
@@ -110,13 +110,7 @@
         {year}
       </text>
 
-      <line
-        x1={LABEL_W}
-        y1={rowY + ROW_H}
-        x2={chartW - RIGHT_PAD}
-        y2={rowY + ROW_H}
-        stroke="rgba(255,255,255,0.04)"
-      />
+      <line x1={LABEL_W} y1={rowY + ROW_H} x2={chartW - RIGHT_PAD} y2={rowY + ROW_H} stroke="rgba(255,255,255,0.04)" />
 
       {#each Array(366) as _, doy}
         {@const cell = cellsByYear.get(year)?.get(doy + 1)}
@@ -138,14 +132,7 @@
               <rect x={bx} y={rowY + ROW_H - regH} width={bw} height={regH} fill={skyColor(cell.count)} rx="0.5" />
             {/if}
             {#if memH > 0}
-              <rect
-                x={bx}
-                y={rowY + ROW_H - h}
-                width={bw}
-                height={memH}
-                fill={amberColor(cell.count)}
-                rx="0.5"
-              />
+              <rect x={bx} y={rowY + ROW_H - h} width={bw} height={memH} fill={amberColor(cell.count)} rx="0.5" />
             {/if}
           </g>
         {/if}
