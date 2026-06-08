@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { CastEventRow } from '../lib/api';
-  import { timeAgo } from '../lib/format';
+  import { formatLocal, timeAgo } from '../lib/format';
 
   const { data } = $props<{ data: CastEventRow[] }>();
 
@@ -44,9 +44,7 @@
             <span class="size-2 rounded-full shrink-0" style="background: {s.color}"></span>
             <span class="mono text-xs text-zinc-300 w-36 shrink-0" style="color: {s.color}">{s.label}</span>
             <span class="mono text-xs text-zinc-500">{timeAgo(e.ts)}</span>
-            <span class="mono text-xs text-zinc-600 ml-auto"
-              >{new Date(e.ts).toISOString().slice(0, 19).replace('T', ' ')}</span
-            >
+            <span class="mono text-xs text-zinc-600 ml-auto">{formatLocal(e.ts)}</span>
           </li>
         {/each}
       </ul>

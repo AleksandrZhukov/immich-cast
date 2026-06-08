@@ -8,6 +8,12 @@ export function thousands(n: number): string {
   return n.toLocaleString('en-US');
 }
 
+export function formatLocal(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
 export function timeAgo(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
   const s = Math.floor(ms / 1000);
