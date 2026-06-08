@@ -76,14 +76,16 @@
   let hovered = $state<{ year: number; doy: number; count: number; memory: number; x: number; y: number } | null>(null);
 
   function handlePointer(e: MouseEvent, year: number, doy: number, count: number, memory: number) {
+    if (!containerEl) return;
     const rect = (e.currentTarget as SVGElement).getBoundingClientRect();
+    const cRect = containerEl.getBoundingClientRect();
     hovered = {
       year,
       doy,
       count,
       memory,
-      x: rect.left + rect.width / 2,
-      y: rect.top,
+      x: rect.left - cRect.left + rect.width / 2,
+      y: rect.top - cRect.top,
     };
   }
 </script>
@@ -142,8 +144,8 @@
 
   {#if hovered}
     <div
-      class="fixed pointer-events-none z-50 tooltip px-3 py-2 text-xs"
-      style="left: {hovered.x}px; top: {hovered.y - 56}px; transform: translateX(-50%);"
+      class="absolute pointer-events-none z-50 tooltip px-3 py-2 text-xs"
+      style="left: {hovered.x}px; top: {Math.max(0, hovered.y - 64)}px; transform: translateX(-50%);"
     >
       <div class="mono text-zinc-300">{formatDate(dayOfYearToDate(hovered.year, hovered.doy))}</div>
       <div class="mono text-accent mt-0.5">{thousands(hovered.count)} shown</div>
