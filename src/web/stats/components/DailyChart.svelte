@@ -37,9 +37,7 @@
 
   const servedArea = $derived.by(() => {
     if (!data.length) return '';
-    const head = data
-      .map((d: DailyPoint, i: number) => `${i === 0 ? 'M' : 'L'} ${x(i)} ${y(d.served)}`)
-      .join(' ');
+    const head = data.map((d: DailyPoint, i: number) => `${i === 0 ? 'M' : 'L'} ${x(i)} ${y(d.served)}`).join(' ');
     return `${head} L ${x(data.length - 1)} ${y(0)} L ${x(0)} ${y(0)} Z`;
   });
 
@@ -103,23 +101,30 @@
 
     <path d={servedArea} fill="url(#dailyArea)" style="animation: fadeUp 0.7s ease-out both;" />
     <path d={servedPath} stroke="#7dd3fc" stroke-width="2" fill="none" stroke-linejoin="round" />
-    <path d={memoryPath} stroke="#fbbf24" stroke-width="1.5" fill="none" stroke-dasharray="3 3" stroke-linejoin="round" />
+    <path
+      d={memoryPath}
+      stroke="#fbbf24"
+      stroke-width="1.5"
+      fill="none"
+      stroke-dasharray="3 3"
+      stroke-linejoin="round"
+    />
 
     {#each ticks as t}
-      <text
-        x={x(t.i)}
-        y={h - 8}
-        text-anchor="middle"
-        fill="#52525b"
-        font-size="9"
-        font-family="JetBrains Mono"
-      >
+      <text x={x(t.i)} y={h - 8} text-anchor="middle" fill="#52525b" font-size="9" font-family="JetBrains Mono">
         {t.label}
       </text>
     {/each}
 
     {#if hover}
-      <line x1={hover.x} y1={PAD.top} x2={hover.x} y2={PAD.top + innerH} stroke="rgba(125,211,252,0.4)" stroke-width="1" />
+      <line
+        x1={hover.x}
+        y1={PAD.top}
+        x2={hover.x}
+        y2={PAD.top + innerH}
+        stroke="rgba(125,211,252,0.4)"
+        stroke-width="1"
+      />
       <circle cx={hover.x} cy={hover.y} r="4" fill="#7dd3fc" />
     {/if}
   </svg>

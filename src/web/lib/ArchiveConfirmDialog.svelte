@@ -1,9 +1,5 @@
 <script lang="ts">
-  const {
-    open,
-    onConfirm,
-    onCancel,
-  } = $props<{
+  const { open, onConfirm, onCancel } = $props<{
     open: boolean;
     onConfirm: () => void;
     onCancel: () => void;
@@ -28,10 +24,7 @@
       <div class="text-xl font-medium mb-1">Archive this photo?</div>
       <div class="text-sm text-gray-600 mb-5">It will be hidden from the slideshow.</div>
       <div class="flex gap-3 justify-center">
-        <button
-          class="px-5 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-base font-medium"
-          onclick={onCancel}
-        >
+        <button class="px-5 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-base font-medium" onclick={onCancel}>
           Cancel
         </button>
         <button

@@ -33,11 +33,11 @@
   });
 
   const accentClass = $derived(
-    ({
+    {
       sky: 'text-accent',
       violet: 'text-accent-violet',
       amber: 'text-accent-amber',
-    })[accent as 'sky' | 'violet' | 'amber'],
+    }[accent as 'sky' | 'violet' | 'amber'],
   );
 </script>
 

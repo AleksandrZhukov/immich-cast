@@ -54,15 +54,9 @@
     const out: Series[] = [];
     for (let oi = 0; oi < data.owners.length; oi++) {
       const owner = data.owners[oi];
-      const values: number[] = data.days.map(
-        (d: { byOwner: Record<string, number> }) => d.byOwner[owner.ownerId] ?? 0,
-      );
-      const line = values
-        .map((v: number, i: number) => `${i === 0 ? 'M' : 'L'} ${x(i)} ${y(v)}`)
-        .join(' ');
-      const area =
-        line +
-        ` L ${x(values.length - 1)} ${y(0)} L ${x(0)} ${y(0)} Z`;
+      const values: number[] = data.days.map((d: { byOwner: Record<string, number> }) => d.byOwner[owner.ownerId] ?? 0);
+      const line = values.map((v: number, i: number) => `${i === 0 ? 'M' : 'L'} ${x(i)} ${y(v)}`).join(' ');
+      const area = line + ` L ${x(values.length - 1)} ${y(0)} L ${x(0)} ${y(0)} Z`;
       out.push({
         ownerId: owner.ownerId,
         ownerName: owner.ownerName,
@@ -151,14 +145,7 @@
     {/each}
 
     {#each ticks as t}
-      <text
-        x={x(t.i)}
-        y={h - 8}
-        text-anchor="middle"
-        fill="#52525b"
-        font-size="9"
-        font-family="JetBrains Mono"
-      >
+      <text x={x(t.i)} y={h - 8} text-anchor="middle" fill="#52525b" font-size="9" font-family="JetBrains Mono">
         {t.label}
       </text>
     {/each}

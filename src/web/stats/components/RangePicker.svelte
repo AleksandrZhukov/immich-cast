@@ -1,10 +1,7 @@
 <script lang="ts">
   export type RangeKey = '7d' | '30d' | '90d' | '1y' | 'all';
 
-  const {
-    value,
-    onChange,
-  } = $props<{
+  const { value, onChange } = $props<{
     value: RangeKey;
     onChange: (key: RangeKey) => void;
   }>();

@@ -58,8 +58,7 @@
             <div class="flex-1 h-1.5 rounded-full bg-white/[0.03] overflow-hidden">
               <div
                 class="h-full rounded-full bg-amber-400/70"
-                style="width: {widthPct}%; animation: fadeUp 0.8s ease-out both; animation-delay: {i *
-                  40}ms;"
+                style="width: {widthPct}%; animation: fadeUp 0.8s ease-out both; animation-delay: {i * 40}ms;"
               ></div>
             </div>
             <div class="mono text-xs text-zinc-400 w-10 text-right">{thousands(row.shown)}</div>

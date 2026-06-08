@@ -26,10 +26,7 @@
   <div class="flex flex-wrap gap-2">
     {#each Object.entries(counts) as [kind, n]}
       {@const s = styleFor(kind)}
-      <div
-        class="mono text-xs px-3 py-1 rounded-full"
-        style="background: {s.bg}; color: {s.color};"
-      >
+      <div class="mono text-xs px-3 py-1 rounded-full" style="background: {s.bg}; color: {s.color};">
         {s.label} <span class="opacity-70">×{n}</span>
       </div>
     {/each}
@@ -47,7 +44,9 @@
             <span class="size-2 rounded-full shrink-0" style="background: {s.color}"></span>
             <span class="mono text-xs text-zinc-300 w-36 shrink-0" style="color: {s.color}">{s.label}</span>
             <span class="mono text-xs text-zinc-500">{timeAgo(e.ts)}</span>
-            <span class="mono text-xs text-zinc-600 ml-auto">{new Date(e.ts).toISOString().slice(0, 19).replace('T', ' ')}</span>
+            <span class="mono text-xs text-zinc-600 ml-auto"
+              >{new Date(e.ts).toISOString().slice(0, 19).replace('T', ' ')}</span
+            >
           </li>
         {/each}
       </ul>

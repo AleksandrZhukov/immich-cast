@@ -69,9 +69,7 @@ export const api = {
   memoryDeck: () => axios.get<MemoryDeck>('/api/stats/memory-deck').then((r) => r.data),
   knownDays: () => axios.get<string[]>('/api/stats/known-days').then((r) => r.data),
   weather: (range: { from: Date; to: Date }, points = 200) =>
-    axios
-      .get<WeatherPoint[]>('/api/stats/weather', { params: { ...rangeQuery(range), points } })
-      .then((r) => r.data),
+    axios.get<WeatherPoint[]>('/api/stats/weather', { params: { ...rangeQuery(range), points } }).then((r) => r.data),
   weatherDaily: (range: { from: Date; to: Date }) =>
     axios.get<WeatherDailyRow[]>('/api/stats/weather-daily', { params: rangeQuery(range) }).then((r) => r.data),
 };

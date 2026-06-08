@@ -21,7 +21,9 @@
 @layer utilities {
   .mono {
     font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-feature-settings: 'tnum' 1, 'cv11' 1;
+    font-feature-settings:
+      'tnum' 1,
+      'cv11' 1;
   }
 
   .panel {

@@ -92,7 +92,9 @@
           <span class="size-1.5 rounded-full bg-sky-400 animate-pulse"></span>
           Immich Cast
         </div>
-        <h1 class="text-4xl font-light mt-1 bg-gradient-to-r from-zinc-100 via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+        <h1
+          class="text-4xl font-light mt-1 bg-gradient-to-r from-zinc-100 via-zinc-200 to-zinc-400 bg-clip-text text-transparent"
+        >
           Slideshow stats
         </h1>
       </div>
@@ -211,9 +213,7 @@
         <WeatherPanel series={weatherSeries} daily={weatherDaily} />
       </section>
 
-      <footer class="mt-8 mono text-xs text-zinc-600 text-center">
-        immich-cast · stats v1
-      </footer>
+      <footer class="mt-8 mono text-xs text-zinc-600 text-center">immich-cast · stats v1</footer>
     {/if}
   </div>
 </div>

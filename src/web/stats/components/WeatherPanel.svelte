@@ -34,17 +34,11 @@
   const aqiInnerW = $derived(Math.max(100, aqiW - PAD.left - PAD.right));
   const innerH = H - PAD.top - PAD.bottom;
 
-  const tempMin = $derived(
-    series.length > 0 ? Math.min(...series.map((p: WeatherPoint) => p.temperature)) : 0,
-  );
-  const tempMax = $derived(
-    series.length > 0 ? Math.max(...series.map((p: WeatherPoint) => p.temperature)) : 30,
-  );
+  const tempMin = $derived(series.length > 0 ? Math.min(...series.map((p: WeatherPoint) => p.temperature)) : 0);
+  const tempMax = $derived(series.length > 0 ? Math.max(...series.map((p: WeatherPoint) => p.temperature)) : 30);
   const tempRange = $derived(Math.max(1, tempMax - tempMin));
 
-  const aqiMax = $derived(
-    series.length > 0 ? Math.max(50, ...series.map((p: WeatherPoint) => p.aqi)) : 50,
-  );
+  const aqiMax = $derived(series.length > 0 ? Math.max(50, ...series.map((p: WeatherPoint) => p.aqi)) : 50);
 
   function tx(i: number, innerW: number): number {
     if (series.length <= 1) return PAD.left;

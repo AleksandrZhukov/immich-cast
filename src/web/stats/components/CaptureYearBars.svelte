@@ -12,9 +12,7 @@
     {@const heightPct = (item.count / maxCount) * 100}
     {@const isCurrent = item.year === currentYear}
     <div class="flex-1 flex flex-col items-center gap-2 group">
-      <div
-        class="mono text-xs text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity"
-      >
+      <div class="mono text-xs text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity">
         {thousands(item.count)}
       </div>
       <div class="w-full flex items-end" style="height: 140px">
