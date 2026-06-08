@@ -137,7 +137,7 @@
           <div class="flex items-baseline justify-between mb-1">
             <h2 class="text-lg font-medium">Photos by capture date</h2>
             <div class="mono text-xs text-zinc-500">
-              {captureSpread.minYear}–{captureSpread.maxYear} · {captureSpread.cells.length} active days
+              {captureSpread.minYear}–{captureSpread.maxYear} · {captureSpread.cells.length} days of photos
             </div>
           </div>
           <p class="text-xs text-zinc-500 mb-4">
