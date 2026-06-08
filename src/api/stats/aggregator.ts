@@ -130,7 +130,7 @@ export async function getDaily(range: DateRange): Promise<DailyPoint[]> {
   return out;
 }
 
-export type CaptureCell = { year: number; doy: number; count: number };
+export type CaptureCell = { year: number; doy: number; count: number; memoryCount: number };
 
 export async function getCaptureSpread(range: DateRange): Promise<{
   minYear: number;
@@ -138,7 +138,7 @@ export async function getCaptureSpread(range: DateRange): Promise<{
   cells: CaptureCell[];
 }> {
   const events = await readRange(range);
-  const buckets = new Map<string, number>();
+  const buckets = new Map<string, { count: number; memory: number }>();
   let minYear = Infinity;
   let maxYear = -Infinity;
 
@@ -149,15 +149,18 @@ export async function getCaptureSpread(range: DateRange): Promise<{
     const year = d.getFullYear();
     const doy = dayOfYear(d);
     const key = `${year}:${doy}`;
-    buckets.set(key, (buckets.get(key) ?? 0) + 1);
+    const cur = buckets.get(key) ?? { count: 0, memory: 0 };
+    cur.count++;
+    if (e.isMemory) cur.memory++;
+    buckets.set(key, cur);
     if (year < minYear) minYear = year;
     if (year > maxYear) maxYear = year;
   }
 
   const cells: CaptureCell[] = [];
-  for (const [key, count] of buckets) {
+  for (const [key, v] of buckets) {
     const [y, d] = key.split(':').map(Number);
-    cells.push({ year: y, doy: d, count });
+    cells.push({ year: y, doy: d, count: v.count, memoryCount: v.memory });
   }
 
   return {

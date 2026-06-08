@@ -12,7 +12,7 @@ export type Summary = {
 
 export type DailyPoint = { date: string; served: number; memory: number };
 
-export type CaptureCell = { year: number; doy: number; count: number };
+export type CaptureCell = { year: number; doy: number; count: number; memoryCount: number };
 
 export type CaptureSpread = { minYear: number; maxYear: number; cells: CaptureCell[] };
 

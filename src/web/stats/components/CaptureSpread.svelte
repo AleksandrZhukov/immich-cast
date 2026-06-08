@@ -17,15 +17,19 @@
     return out;
   });
 
+  type Cell = { count: number; memory: number };
   const cellsByYear = $derived.by(() => {
-    const map = new Map<number, Map<number, number>>();
+    const map = new Map<number, Map<number, Cell>>();
     for (const c of data.cells) {
       let row = map.get(c.year);
       if (!row) {
         row = new Map();
         map.set(c.year, row);
       }
-      row.set(c.doy, (row.get(c.doy) ?? 0) + c.count);
+      const cur = row.get(c.doy) ?? { count: 0, memory: 0 };
+      cur.count += c.count;
+      cur.memory += c.memoryCount;
+      row.set(c.doy, cur);
     }
     return map;
   });
@@ -54,10 +58,13 @@
     return Math.max(2, Math.pow(ratio, 0.7) * ROW_H);
   }
 
-  function barColor(count: number, isMemory: boolean): string {
+  function skyColor(count: number): string {
     const ratio = Math.min(1, count / maxCount);
-    if (isMemory) return `rgba(251, 191, 36, ${0.4 + ratio * 0.6})`;
     return `rgba(125, 211, 252, ${0.35 + ratio * 0.65})`;
+  }
+  function amberColor(count: number): string {
+    const ratio = Math.min(1, count / maxCount);
+    return `rgba(251, 191, 36, ${0.5 + ratio * 0.5})`;
   }
 
   function monthTick(monthIdx: number, year: number): number {
@@ -66,14 +73,15 @@
     return Math.floor((d.getTime() - start.getTime()) / 86_400_000);
   }
 
-  let hovered = $state<{ year: number; doy: number; count: number; x: number; y: number } | null>(null);
+  let hovered = $state<{ year: number; doy: number; count: number; memory: number; x: number; y: number } | null>(null);
 
-  function handlePointer(e: MouseEvent, year: number, doy: number, count: number) {
+  function handlePointer(e: MouseEvent, year: number, doy: number, count: number, memory: number) {
     const rect = (e.currentTarget as SVGElement).getBoundingClientRect();
     hovered = {
       year,
       doy,
       count,
+      memory,
       x: rect.left + rect.width / 2,
       y: rect.top,
     };
@@ -111,23 +119,35 @@
       />
 
       {#each Array(366) as _, doy}
-        {@const count = cellsByYear.get(year)?.get(doy + 1) ?? 0}
-        {#if count > 0}
-          {@const h = barHeight(count)}
+        {@const cell = cellsByYear.get(year)?.get(doy + 1)}
+        {#if cell && cell.count > 0}
+          {@const h = barHeight(cell.count)}
+          {@const memH = cell.memory > 0 ? (cell.memory / cell.count) * h : 0}
+          {@const regH = h - memH}
+          {@const bx = LABEL_W + doy * dayW}
+          {@const bw = Math.max(1.5, dayW - 0.5)}
+          {@const delay = rowIdx * 60 + (doy % 50) * 6}
           <!-- svelte-ignore a11y_no_static_element_interactions -->
-          <rect
-            x={LABEL_W + doy * dayW}
-            y={rowY + ROW_H - h}
-            width={Math.max(1.5, dayW - 0.5)}
-            height={h}
-            fill={barColor(count, false)}
-            rx="0.5"
-            class="cursor-pointer transition-opacity hover:opacity-100"
-            style="animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: {rowIdx * 60 +
-              (doy % 50) * 6}ms;"
-            onmousemove={(e) => handlePointer(e, year, doy + 1, count)}
+          <g
+            class="cursor-pointer"
+            style="animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: {delay}ms;"
+            onmousemove={(e) => handlePointer(e, year, doy + 1, cell.count, cell.memory)}
             onmouseleave={() => (hovered = null)}
-          />
+          >
+            {#if regH > 0}
+              <rect x={bx} y={rowY + ROW_H - regH} width={bw} height={regH} fill={skyColor(cell.count)} rx="0.5" />
+            {/if}
+            {#if memH > 0}
+              <rect
+                x={bx}
+                y={rowY + ROW_H - h}
+                width={bw}
+                height={memH}
+                fill={amberColor(cell.count)}
+                rx="0.5"
+              />
+            {/if}
+          </g>
         {/if}
       {/each}
     {/each}
@@ -140,6 +160,13 @@
     >
       <div class="mono text-zinc-300">{formatDate(dayOfYearToDate(hovered.year, hovered.doy))}</div>
       <div class="mono text-accent mt-0.5">{thousands(hovered.count)} shown</div>
+      {#if hovered.memory > 0}
+        <div class="mono text-accent-amber mt-0.5">
+          {thousands(hovered.memory)} as memory{hovered.count > hovered.memory
+            ? ` · ${thousands(hovered.count - hovered.memory)} regular`
+            : ''}
+        </div>
+      {/if}
     </div>
   {/if}
 </div>

@@ -142,6 +142,8 @@
           </div>
           <p class="text-xs text-zinc-500 mb-4">
             Each bar is a day in the photo's capture year. Taller bars = shown more.
+            <span class="text-accent">Sky</span> = regular slides,
+            <span class="text-accent-amber">amber</span> = shown as "on this day" memory.
           </p>
           <CaptureSpreadView data={captureSpread} />
         </section>
