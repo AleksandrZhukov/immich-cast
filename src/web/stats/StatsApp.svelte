@@ -111,8 +111,17 @@
     {#if loading && !summary}
       <div class="text-zinc-500 mono text-sm">Loading…</div>
     {:else if summary}
-      <section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+      <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
         <StatCard label="Slides served" value={summary.totalServed} accent="sky" delay={0} />
+        <StatCard
+          label="Unique photos"
+          value={summary.uniqueImages}
+          accent="sky"
+          hint={summary.uniqueImages > 0 && summary.totalServed > summary.uniqueImages
+            ? `${(summary.totalServed / summary.uniqueImages).toFixed(2)}× avg shows`
+            : undefined}
+          delay={80}
+        />
         <StatCard
           label="Memory photos"
           value={summary.memoryServed}
@@ -120,15 +129,15 @@
           hint={summary.totalServed > 0
             ? `${((summary.memoryServed / summary.totalServed) * 100).toFixed(1)}% of served`
             : undefined}
-          delay={80}
+          delay={160}
         />
-        <StatCard label="Unique owners" value={summary.uniqueOwners} accent="violet" delay={160} />
+        <StatCard label="Unique owners" value={summary.uniqueOwners} accent="violet" delay={240} />
         <StatCard
           label="Active days"
           value={activeDays}
           accent="sky"
           hint={knownDays[0] ? `data since ${knownDays[0]}` : 'no data yet'}
-          delay={240}
+          delay={320}
         />
       </section>
 
