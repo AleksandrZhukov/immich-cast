@@ -24,7 +24,7 @@ Built out of frustration with the default Nest Hub photo gallery — no location
 
 The app has two parts:
 
-**API server** (Node.js + Fastify) — fetches random images and memories from Immich, serves them as slides, handles weather/location lookups, and manages the Chromecast connection via the castv2 protocol.
+**API server** (Bun + Fastify) — fetches random images and memories from Immich, serves them as slides, handles weather/location lookups, and manages the Chromecast connection via the castv2 protocol.
 
 **Frontend** (Svelte + Tailwind) — the actual slideshow UI that runs on the Chromecast. Auto-advances slides, lazy-loads images, handles touch/keyboard input.
 
@@ -36,7 +36,7 @@ The Chromecast integration was the tricky part. The castv2 protocol is poorly do
 
 - A running [Immich](https://immich.app/) instance
 - A Chromecast-enabled device on the same network
-- Docker (for production) or Node.js 22+ (for development)
+- Docker (for production) or [Bun](https://bun.sh) 1+ (for development)
 
 ### Configuration
 
@@ -67,18 +67,35 @@ WEATHER_REFRESH_INTERVAL=60000           # Refresh interval in ms
 ### Docker
 
 ```bash
-docker build -t immich-cast .
-docker run -d --env-file .env --network host immich-cast
+docker compose up -d
 ```
 
-`--network host` is needed so the container can reach your Chromecast on the local network.
+Edit `TZ` in `docker-compose.yml` to your timezone (defaults to `America/Edmonton`). The container reads `.env` for the rest of the config.
+
+### Deploying to a homelab
+
+`deploy.sh` rsyncs the source to a remote host over SSH and recreates the Docker container there. Configure it once by copying `.env.deploy.example` to `.env.deploy`:
+
+```bash
+cp .env.deploy.example .env.deploy
+# edit HOMELAB_HOST and HOMELAB_PATH
+```
+
+Then copy your `.env` to the remote (one-time) and run the deploy:
+
+```bash
+scp .env "$HOMELAB_HOST:$HOMELAB_PATH/.env"
+./deploy.sh
+```
+
+The variables can also be passed inline (`HOMELAB_HOST=... HOMELAB_PATH=... ./deploy.sh`) if you prefer not to keep a file. Passwordless SSH (key-based auth) and Docker installed on the remote are assumed.
 
 ### Development
 
 ```bash
-npm install
+bun install
 cp .env.example .env   # edit with your values
-npm start              # runs API + Vite dev server concurrently
+bun start              # runs API + Vite dev server concurrently
 ```
 
 The API server watches for changes and auto-restarts. The Vite dev server hot-reloads the frontend.

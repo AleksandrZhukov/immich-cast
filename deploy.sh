@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-HOMELAB_HOST="${HOMELAB_HOST:-homelab@192.168.1.93}"
-HOMELAB_PATH="${HOMELAB_PATH:-/home/homelab/immich-cast}"
-
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$REPO_ROOT"
+
+if [ -f .env.deploy ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env.deploy
+  set +a
+fi
+
+: "${HOMELAB_HOST:?Set HOMELAB_HOST (e.g. user@192.168.1.10) in .env.deploy or env}"
+: "${HOMELAB_PATH:?Set HOMELAB_PATH (e.g. /home/user/immich-cast) in .env.deploy or env}"
 
 echo ">> Syncing immich-cast to $HOMELAB_HOST:$HOMELAB_PATH"
 ssh "${HOMELAB_HOST}" "mkdir -p ${HOMELAB_PATH}"
