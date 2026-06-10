@@ -78,7 +78,7 @@ function ensureMemoryDeck(): Promise<void> {
 }
 
 export const isPortrait = (info: ImageInfo): boolean => {
-  const value = Number(info.orientation) ?? ExifOrientation.Horizontal;
+  const value = Number(info.orientation ?? ExifOrientation.Horizontal);
 
   switch (value) {
     case ExifOrientation.Rotate90CW:
