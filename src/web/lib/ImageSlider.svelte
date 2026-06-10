@@ -23,7 +23,7 @@
   let archivedIds = $state(new Set<string>());
 
   let intervalId: number;
-  let mounted = false;
+  let mounted = $state(false);
 
   async function fetchImages(append = false) {
     if (isFetchingMore) return;
@@ -198,6 +198,12 @@
   });
 
   $effect(() => {
+    // Re-arm the auto-advance whenever the slide interval or archive state
+    // changes — both are read inside startSlideInterval, so list them
+    // explicitly here instead of relying on transitive dependency tracking.
+    // Guarded on `mounted` (now $state) so it doesn't race the initial fetch.
+    void slideInterval;
+    void archiveCandidate;
     if (mounted) {
       startSlideInterval();
     }
