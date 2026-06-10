@@ -96,7 +96,7 @@ export const isPortrait = (info: ImageInfo): boolean => {
 };
 let pendingPortrait: ImageInfo | null = null;
 
-async function fetchGeneralImages(count: number): Promise<ImageInfo[]> {
+export async function fetchGeneralImages(count: number): Promise<ImageInfo[]> {
   let assets: AssetResponseDto[] = [];
   let attempts = 0;
   const maxAttempts = 5;
