@@ -128,10 +128,24 @@ export const startMonitoring = async () => {
 
       receiver.send({ type: 'GET_STATUS', requestId: 1 });
 
-      while (true) {
-        await delay(isWithinTimeRange() ? 5000 : 60_000);
-        receiver.send({ type: 'GET_STATUS', requestId: ++requestCounter });
-      }
+      // Once connectClient resolves, its error/close handlers become no-ops, so
+      // a dropped connection would leave the poll loop writing GET_STATUS into a
+      // dead socket forever and the reconnect logic below would never run. Race
+      // the poll loop against a fresh "connection lost" promise so a close/error
+      // throws into the catch and triggers a reconnect.
+      const closed = new Promise<never>((_, reject) => {
+        client!.on('error', reject);
+        client!.on('close', () => reject(new Error('Connection closed')));
+      });
+
+      const pollLoop = (async () => {
+        while (true) {
+          await delay(isWithinTimeRange() ? 5000 : 60_000);
+          receiver.send({ type: 'GET_STATUS', requestId: ++requestCounter });
+        }
+      })();
+
+      await Promise.race([pollLoop, closed]);
     } catch (err) {
       if (err instanceof Error) {
         console.error('[cast] ❌ Error:', err.message);
