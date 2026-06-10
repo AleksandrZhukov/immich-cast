@@ -1,54 +1,26 @@
 import axios from 'redaxios';
+import type {
+  Summary,
+  DailyPoint,
+  CaptureCell,
+  CaptureSpread,
+  DailyByOwner,
+  CastEventRow,
+  WeatherPoint,
+  WeatherDailyRow,
+  MemoryDeckStats as MemoryDeck,
+} from '../../../types';
 
-export type Summary = {
-  totalServed: number;
-  memoryServed: number;
-  uniqueImages: number;
-  uniqueOwners: number;
-  rangeDays: number;
-  perOwner: Array<{ ownerId: string; ownerName: string; count: number }>;
-  perCaptureYear: Array<{ year: number; count: number }>;
-};
-
-export type DailyPoint = { date: string; served: number; memory: number };
-
-export type CaptureCell = { year: number; doy: number; count: number; memoryCount: number };
-
-export type CaptureSpread = { minYear: number; maxYear: number; cells: CaptureCell[] };
-
-export type DailyByOwner = {
-  owners: Array<{ ownerId: string; ownerName: string; total: number }>;
-  days: Array<{ date: string; byOwner: Record<string, number> }>;
-};
-
-export type CastEventRow = { ts: string; kind: string; detail?: string };
-
-export type WeatherPoint = {
-  ts: string;
-  temperature: number;
-  aqi: number;
-  humidity: number;
-  icon: string;
-  windSpeed: number;
-};
-
-export type WeatherDailyRow = {
-  date: string;
-  tempMin: number | null;
-  tempMax: number | null;
-  tempAvg: number | null;
-  aqiAvg: number | null;
-  aqiMax: number | null;
-  dominantIcon: string | null;
-  samples: number;
-};
-
-export type MemoryDeck = {
-  total: number;
-  shown: number;
-  remaining: number;
-  shuffles: number;
-  byYear: Record<string, number>;
+export type {
+  Summary,
+  DailyPoint,
+  CaptureCell,
+  CaptureSpread,
+  DailyByOwner,
+  CastEventRow,
+  WeatherPoint,
+  WeatherDailyRow,
+  MemoryDeck,
 };
 
 function rangeQuery(range: { from: Date; to: Date }) {

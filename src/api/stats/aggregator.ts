@@ -1,6 +1,27 @@
 import { readFile, readdir } from 'node:fs/promises';
 import * as path from 'node:path';
 import { DATA_DIR, type Event } from './recorder';
+import type {
+  Summary,
+  DailyPoint,
+  CaptureCell,
+  CaptureSpread,
+  DailyByOwner,
+  CastEventRow,
+  WeatherPoint,
+  WeatherDailyRow,
+} from '../../types';
+
+export type {
+  Summary,
+  DailyPoint,
+  CaptureCell,
+  CaptureSpread,
+  DailyByOwner,
+  CastEventRow,
+  WeatherPoint,
+  WeatherDailyRow,
+};
 
 export type DateRange = { from: Date; to: Date };
 
@@ -83,16 +104,6 @@ export async function listKnownDays(): Promise<string[]> {
   }
 }
 
-export type Summary = {
-  totalServed: number;
-  memoryServed: number;
-  uniqueImages: number;
-  uniqueOwners: number;
-  rangeDays: number;
-  perOwner: Array<{ ownerId: string; ownerName: string; count: number }>;
-  perCaptureYear: Array<{ year: number; count: number }>;
-};
-
 export async function getSummary(range: DateRange): Promise<Summary> {
   const events = await readRange(range);
   const served = events.filter((e) => e.type === 'slide_served');
@@ -133,8 +144,6 @@ export async function getSummary(range: DateRange): Promise<Summary> {
   };
 }
 
-export type DailyPoint = { date: string; served: number; memory: number };
-
 export async function getDaily(range: DateRange): Promise<DailyPoint[]> {
   const out: DailyPoint[] = [];
   for (const day of daysInRange(range)) {
@@ -152,13 +161,7 @@ export async function getDaily(range: DateRange): Promise<DailyPoint[]> {
   return out;
 }
 
-export type CaptureCell = { year: number; doy: number; count: number; memoryCount: number };
-
-export async function getCaptureSpread(range: DateRange): Promise<{
-  minYear: number;
-  maxYear: number;
-  cells: CaptureCell[];
-}> {
+export async function getCaptureSpread(range: DateRange): Promise<CaptureSpread> {
   const events = await readRange(range);
   const buckets = new Map<string, { count: number; memory: number }>();
   let minYear = Infinity;
@@ -200,11 +203,6 @@ export function dayOfYear(d: Date): number {
   return (Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 0)) / 86_400_000;
 }
 
-export type DailyByOwner = {
-  owners: Array<{ ownerId: string; ownerName: string; total: number }>;
-  days: Array<{ date: string; byOwner: Record<string, number> }>;
-};
-
 export async function getDailyByOwner(range: DateRange): Promise<DailyByOwner> {
   const ownerNames = new Map<string, string>();
   const ownerTotals = new Map<string, number>();
@@ -228,21 +226,6 @@ export async function getDailyByOwner(range: DateRange): Promise<DailyByOwner> {
 
   return { owners, days };
 }
-
-export type CastEventRow = {
-  ts: string;
-  kind: string;
-  detail?: string;
-};
-
-export type WeatherPoint = {
-  ts: string;
-  temperature: number;
-  aqi: number;
-  humidity: number;
-  icon: string;
-  windSpeed: number;
-};
 
 export async function getWeatherSeries(range: DateRange, maxPoints = 200): Promise<WeatherPoint[]> {
   const events = await readRange(range);
@@ -277,17 +260,6 @@ export function downsample<T>(samples: T[], maxPoints: number): T[] {
   for (let i = 0; i < maxPoints; i++) out.push(samples[Math.round(i * stride)]);
   return out;
 }
-
-export type WeatherDailyRow = {
-  date: string;
-  tempMin: number | null;
-  tempMax: number | null;
-  tempAvg: number | null;
-  aqiAvg: number | null;
-  aqiMax: number | null;
-  dominantIcon: string | null;
-  samples: number;
-};
 
 export async function getWeatherDaily(range: DateRange): Promise<WeatherDailyRow[]> {
   const out: WeatherDailyRow[] = [];

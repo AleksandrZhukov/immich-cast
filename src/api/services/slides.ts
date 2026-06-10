@@ -1,41 +1,11 @@
 import { fetchAssetInfo, fetchRandomImages } from './immich';
-import { type AssetResponseDto, ExifOrientation } from '../../types';
+import { type AssetResponseDto, ExifOrientation, SlideType } from '../../types';
+import type { ImageInfo, Slide } from '../../types';
 import { ImageHistoryTracker } from '../utils/imageHistory';
 import { MemoryDeck } from '../utils/memoryDeck';
 import { recordSlideServed } from '../stats/recorder';
 
-export interface ImageInfo {
-  id: string;
-  width: number;
-  height: number;
-  ownerId: string;
-  ownerName: string;
-  ownerAvatarColor: string;
-  fileCreatedAt: string;
-  latitude: number | null;
-  longitude: number | null;
-  orientation?: string | null;
-  yearsAgo?: number;
-}
-
-const enum SlideType {
-  SINGLE = 'single',
-  DOUBLE = 'double',
-}
-
-export type SingleSlide = {
-  type: SlideType.SINGLE;
-  id: string;
-  isPortrait: boolean;
-  items: [ImageInfo];
-};
-export type DoubleSlide = {
-  type: SlideType.DOUBLE;
-  id: string;
-  items: [ImageInfo, ImageInfo];
-};
-
-export type Slide = SingleSlide | DoubleSlide;
+export type { ImageInfo, Slide } from '../../types';
 
 const imageHistory = new ImageHistoryTracker(10000);
 const memoryDeck = new MemoryDeck();

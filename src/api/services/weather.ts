@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { env } from '../config/env';
 import { recordWeatherSample } from '../stats/recorder';
+import type { CurrentWeather } from '../../types';
 
 const CITY_ID = env.weather.cityId;
 const WEATHER_TTL_MS = 60_000;
@@ -22,16 +23,6 @@ type WeatherResponse = {
 function getWeatherIconUrl(icon: string) {
   return `https://www.iqair.com/assets/svg/weather/ic-weather-${icon}.svg`;
 }
-
-type CurrentWeather = {
-  aqi: number;
-  humidity: number;
-  icon: string;
-  iconUrl: string;
-  pressure: number;
-  temperature: number;
-  wind: { speed: number; direction: number };
-};
 
 async function fetchWeather(): Promise<CurrentWeather> {
   const res = await axios.get<WeatherResponse>(`https://website-api.airvisual.com/v1/cities/${CITY_ID}`, {
