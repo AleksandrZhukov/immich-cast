@@ -42,7 +42,7 @@ type NominatimResponse = {
   extratags: any;
 };
 
-const getFormatedLocation = (location: NominatimResponse) => {
+export const getFormatedLocation = (location: NominatimResponse) => {
   if (!location) return '';
 
   let formatted = '';
