@@ -1,58 +1,85 @@
 import 'dotenv/config';
+import { createEnv } from '@t3-oss/env-core';
+import { z } from 'zod';
 
-const requiredEnvVars = {
-  IMMICH_API_URL: process.env.IMMICH_API_URL,
-  IMMICH_API_KEY: process.env.IMMICH_API_KEY,
-  CHROMECAST_IP: process.env.CHROMECAST_IP,
-  CAST_URL: process.env.CAST_URL,
-  START_HOUR: process.env.START_HOUR,
-  END_HOUR: process.env.END_HOUR,
-};
+export const hourSchema = z.coerce.number().int().min(0).max(23);
 
-const missingVars = Object.entries(requiredEnvVars)
-  .filter(([_, value]) => !value)
-  .map(([key]) => key);
-
-if (missingVars.length > 0) {
-  throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
+export function parseOwnersApiKeys(raw: string | undefined): Record<string, string> {
+  const map: Record<string, string> = {};
+  if (!raw) return map;
+  for (const entry of raw.split(',')) {
+    const trimmed = entry.trim();
+    if (!trimmed) continue;
+    const [uuid, key] = trimmed.split('=').map((s) => s.trim());
+    if (!uuid || !key) {
+      throw new Error(`Malformed IMMICH_OWNERS_API_KEYS entry: "${entry}"`);
+    }
+    map[uuid] = key;
+  }
+  return map;
 }
 
-const startHour = Number(requiredEnvVars.START_HOUR);
-const endHour = Number(requiredEnvVars.END_HOUR);
+const ownersApiKeys = z
+  .string()
+  .optional()
+  .transform((val, ctx) => {
+    try {
+      return parseOwnersApiKeys(val);
+    } catch (e) {
+      ctx.addIssue({ code: 'custom', message: e instanceof Error ? e.message : 'Malformed IMMICH_OWNERS_API_KEYS' });
+      return z.NEVER;
+    }
+  });
 
-if (startHour < 0 || endHour > 23 || endHour < startHour) {
-  throw new Error('Invalid START_HOUR or END_HOUR environment variable');
+const raw = createEnv({
+  server: {
+    IMMICH_API_URL: z.url(),
+    IMMICH_API_KEY: z.string().min(1),
+    IMMICH_OWNERS_API_KEYS: ownersApiKeys,
+    CHROMECAST_IP: z.ipv4(),
+    CAST_URL: z.url(),
+    START_HOUR: hourSchema,
+    END_HOUR: hourSchema,
+    PORT: z.coerce.number().int().positive().default(2284),
+    SLIDE_INTERVAL: z.coerce.number().int().positive().default(30000),
+    WEATHER_ENABLED: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((v) => v === 'true'),
+    WEATHER_REFRESH_INTERVAL: z.coerce.number().int().positive().default(60000),
+    IQAIR_CITY_ID: z.string().optional(),
+    NODE_ENV: z.enum(['development', 'production', 'test']).default('production'),
+  },
+  runtimeEnv: process.env,
+  emptyStringAsUndefined: true,
+});
+
+if (raw.END_HOUR <= raw.START_HOUR) {
+  throw new Error(`Invalid hours: END_HOUR (${raw.END_HOUR}) must be greater than START_HOUR (${raw.START_HOUR})`);
 }
-
-const ownersApiKeys = process.env.IMMICH_OWNERS_API_KEYS?.split(',') ?? [];
-const ownersApiKeysMap = ownersApiKeys.reduce<Record<string, string>>((acc, item) => {
-  const [uuid, key] = item.split('=');
-  acc[uuid] = key;
-  return acc;
-}, {});
 
 export const env = {
   immich: {
-    apiUrl: requiredEnvVars.IMMICH_API_URL!,
-    apiKey: requiredEnvVars.IMMICH_API_KEY!,
-    ownersApiKeys: ownersApiKeysMap,
+    apiUrl: raw.IMMICH_API_URL,
+    apiKey: raw.IMMICH_API_KEY,
+    ownersApiKeys: raw.IMMICH_OWNERS_API_KEYS,
   },
   cast: {
-    ip: requiredEnvVars.CHROMECAST_IP!,
-    url: requiredEnvVars.CAST_URL!,
+    ip: raw.CHROMECAST_IP,
+    url: raw.CAST_URL,
     appId: '5CB45E5A', // Default Chromecast app ID
-    startHour,
-    endHour,
+    startHour: raw.START_HOUR,
+    endHour: raw.END_HOUR,
   },
   weather: {
-    cityId: process.env.IQAIR_CITY_ID,
+    cityId: raw.IQAIR_CITY_ID,
   },
   server: {
-    port: Number(process.env.PORT) || 2284,
+    port: raw.PORT,
   },
   client: {
-    slideInterval: Number(process.env.SLIDE_INTERVAL) || 30000,
-    weatherEnabled: process.env.WEATHER_ENABLED === 'true',
-    weatherRefreshInterval: Number(process.env.WEATHER_REFRESH_INTERVAL) || 60000,
+    slideInterval: raw.SLIDE_INTERVAL,
+    weatherEnabled: raw.WEATHER_ENABLED,
+    weatherRefreshInterval: raw.WEATHER_REFRESH_INTERVAL,
   },
 };
