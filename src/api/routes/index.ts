@@ -15,7 +15,6 @@ import {
   getWeatherDaily,
   listKnownDays,
 } from '../stats/aggregator';
-import { recordWeatherSample } from '../stats/recorder';
 
 export function parseRange(from?: string, to?: string): { from: Date; to: Date } {
   // Garbage / missing dates fall back to defaults instead of producing
@@ -96,15 +95,6 @@ export const registerRoutes = (server: FastifyInstance) => {
 
       instance.get('/weather', async (_, res) => {
         const weather = await getCurrentWeather();
-        if (weather) {
-          recordWeatherSample({
-            temperature: weather.temperature,
-            aqi: weather.aqi,
-            humidity: weather.humidity,
-            icon: weather.icon,
-            windSpeed: weather.wind.speed,
-          });
-        }
         res.send(weather);
       });
 
