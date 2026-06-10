@@ -15,6 +15,7 @@ let currentTransportId: ApplicationInfo['transportId'] | null = null;
 
 let isIdleCount = 0;
 let requestCounter = 1;
+let launchStuckTimer: ReturnType<typeof setTimeout> | null = null;
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
@@ -33,6 +34,18 @@ const launchApp = (receiver: Channel, volume: number | undefined) =>
     receiver.send({ type: 'SET_VOLUME', volume: { muted: true }, requestId: 1 });
     receiver.send({ type: 'LAUNCH', appId: APP_ID, requestId: 1 });
     receiver.send({ type: 'SET_VOLUME', volume: { level: volume || 0.25 }, requestId: 1 });
+
+    // If the launch fails the app never reaches 'URL Cast ready...', so
+    // isLaunching would stay true forever and block idle-relaunch. Reset it
+    // after a grace period if no transport appeared.
+    if (launchStuckTimer) clearTimeout(launchStuckTimer);
+    launchStuckTimer = setTimeout(() => {
+      if (isLaunching) {
+        console.warn('[cast] ⚠️ Launch did not complete in time, resetting isLaunching');
+        isLaunching = false;
+      }
+    }, 15_000);
+
     setTimeout(() => resolve(), 3000);
   });
 
@@ -121,6 +134,10 @@ export const startMonitoring = async () => {
           if (currentTransportId !== app.transportId && client) {
             currentTransportId = app.transportId;
             isLaunching = false;
+            if (launchStuckTimer) {
+              clearTimeout(launchStuckTimer);
+              launchStuckTimer = null;
+            }
             sendUrlToApp(client, currentTransportId);
           }
         }
