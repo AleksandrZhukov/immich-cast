@@ -1,7 +1,50 @@
 import axios from 'axios';
 
-let lastGeoRequestTime = 0;
 const GEO_REQUEST_INTERVAL = 1000;
+const GEO_CACHE_MAX = 1000;
+
+// Nominatim's usage policy requires caching results. Key on lat/lon rounded to
+// 4 decimals (~11m) so nearby photos share a lookup. Map insertion order gives
+// us a cheap LRU: re-insert on read, evict the oldest on overflow.
+const geoCache = new Map<string, string>();
+
+function cacheGet(key: string): string | undefined {
+  const value = geoCache.get(key);
+  if (value === undefined) return undefined;
+  geoCache.delete(key);
+  geoCache.set(key, value);
+  return value;
+}
+
+function cacheSet(key: string, value: string): void {
+  geoCache.delete(key);
+  geoCache.set(key, value);
+  if (geoCache.size > GEO_CACHE_MAX) {
+    const oldest = geoCache.keys().next().value;
+    if (oldest !== undefined) geoCache.delete(oldest);
+  }
+}
+
+// Serialize requests through a promise chain and space each one ≥1s apart. The
+// old timestamp check raced under concurrent calls — several could read the
+// same lastGeoRequestTime and fire together. The chain guarantees ordering.
+let geoQueue: Promise<unknown> = Promise.resolve();
+let lastRequestEnd = 0;
+
+function enqueueGeoRequest<T>(fn: () => Promise<T>): Promise<T> {
+  const result = geoQueue.then(async () => {
+    const wait = Math.max(0, lastRequestEnd + GEO_REQUEST_INTERVAL - Date.now());
+    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    try {
+      return await fn();
+    } finally {
+      lastRequestEnd = Date.now();
+    }
+  });
+  // Keep the chain alive even if this request rejects.
+  geoQueue = result.catch(() => {});
+  return result;
+}
 
 type GeocodeAddress = {
   county: string;
@@ -111,31 +154,31 @@ export const getFormatedLocation = (location: NominatimResponse) => {
 export const reverseGeocode = async (lat: number | undefined, lon: number | undefined): Promise<string | null> => {
   if (!lat || !lon) return null;
 
+  const key = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+  const cached = cacheGet(key);
+  if (cached !== undefined) return cached;
+
   try {
-    const now = Date.now();
-    const timeToWait = Math.max(0, lastGeoRequestTime + GEO_REQUEST_INTERVAL - now);
-
-    if (timeToWait > 0) {
-      await new Promise((resolve) => setTimeout(resolve, timeToWait));
-    }
-
-    const response = await axios.get<NominatimResponse>(`https://nominatim.openstreetmap.org/reverse`, {
-      params: {
-        format: 'jsonv2',
-        addressdetails: 1,
-        lat,
-        lon,
-        'accept-language': 'en',
-      },
-      headers: {
-        'User-Agent': 'ImmichCast/1.0',
-      },
+    const formatted = await enqueueGeoRequest(async () => {
+      const response = await axios.get<NominatimResponse>(`https://nominatim.openstreetmap.org/reverse`, {
+        params: {
+          format: 'jsonv2',
+          addressdetails: 1,
+          lat,
+          lon,
+          'accept-language': 'en',
+        },
+        headers: {
+          'User-Agent': 'ImmichCast/1.0',
+        },
+      });
+      return getFormatedLocation(response.data);
     });
 
-    lastGeoRequestTime = Date.now();
-
-    return getFormatedLocation(response.data);
+    cacheSet(key, formatted);
+    return formatted;
   } catch (error) {
+    // Don't cache transient failures so a blip doesn't poison the location.
     console.error('Error with reverse geocoding:', error);
     return null;
   }
