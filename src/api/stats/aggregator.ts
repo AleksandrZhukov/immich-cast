@@ -170,7 +170,7 @@ export async function getCaptureSpread(range: DateRange): Promise<{
   };
 }
 
-function dayOfYear(d: Date): number {
+export function dayOfYear(d: Date): number {
   // Compute from local Y/M/D via UTC so every day is exactly 24h. Subtracting
   // raw timestamps (d.getTime() - startOfYear) is off by one in DST timezones
   // (deploy TZ is America/Edmonton) for dates after spring-forward, because
@@ -237,11 +237,22 @@ export async function getWeatherSeries(range: DateRange, maxPoints = 200): Promi
       });
     }
   }
+  return downsample(samples, maxPoints);
+}
+
+/**
+ * Evenly pick at most `maxPoints` samples from `samples`. Returns exactly
+ * `maxPoints` items when downsampling is needed, always including the first
+ * and last sample with no duplicates — the old logic emitted `maxPoints + 1`
+ * points and could repeat the final sample.
+ */
+export function downsample<T>(samples: T[], maxPoints: number): T[] {
+  if (maxPoints <= 0) return [];
   if (samples.length <= maxPoints) return samples;
-  const stride = samples.length / maxPoints;
-  const out: WeatherPoint[] = [];
-  for (let i = 0; i < maxPoints; i++) out.push(samples[Math.floor(i * stride)]);
-  out.push(samples[samples.length - 1]);
+  if (maxPoints === 1) return [samples[samples.length - 1]];
+  const out: T[] = [];
+  const stride = (samples.length - 1) / (maxPoints - 1);
+  for (let i = 0; i < maxPoints; i++) out.push(samples[Math.round(i * stride)]);
   return out;
 }
 
