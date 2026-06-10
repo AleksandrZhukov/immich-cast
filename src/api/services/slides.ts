@@ -137,7 +137,7 @@ async function fetchGeneralImages(count: number): Promise<ImageInfo[]> {
   );
 }
 
-function interleave(general: ImageInfo[], memories: ImageInfo[]): ImageInfo[] {
+export function interleave(general: ImageInfo[], memories: ImageInfo[]): ImageInfo[] {
   if (memories.length === 0) return general;
   if (general.length === 0) return memories;
 
