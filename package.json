@@ -9,7 +9,7 @@
     "start": "concurrently \"bun run api\" \"bun run dev\"",
     "build": "cd src/web && vite build --outDir ../../dist",
     "preview": "cd src/web && vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
+    "type-check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
     "test": "bun test"
   },
   "devDependencies": {
