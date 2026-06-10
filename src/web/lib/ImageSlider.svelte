@@ -63,6 +63,12 @@
   function nextSlide(isAuto = false) {
     if (images.length === 0 || isTransitioning) return;
 
+    // An out-of-range currentIndex renders every slide opacity:0 (a black screen); stay put and keep extending the deck.
+    if (currentIndex >= images.length - 1) {
+      fetchImages(true);
+      return;
+    }
+
     isTransitioning = true;
 
     currentIndex = currentIndex + 1;
