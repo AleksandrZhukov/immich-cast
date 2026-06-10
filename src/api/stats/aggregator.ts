@@ -20,7 +20,7 @@ function* daysInRange({ from, to }: DateRange): Generator<string> {
   }
 }
 
-async function readDay(dayKey: string): Promise<Event[]> {
+async function readDayUncached(dayKey: string): Promise<Event[]> {
   const file = path.join(DATA_DIR, `events-${dayKey}.jsonl`);
   try {
     const content = await readFile(file, 'utf8');
@@ -38,6 +38,28 @@ async function readDay(dayKey: string): Promise<Event[]> {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') return [];
     throw err;
   }
+}
+
+// A dashboard load fans out to ~7 endpoints, each re-reading the same JSONL
+// files. Cache reads (as in-flight promises so concurrent callers share one
+// read). Past days are immutable → cached indefinitely; today's file is still
+// being appended → short TTL so fresh samples show up within seconds.
+const TODAY_CACHE_TTL_MS = 10_000;
+const dayCache = new Map<string, { events: Promise<Event[]>; expires: number }>();
+
+function readDay(dayKey: string): Promise<Event[]> {
+  const now = Date.now();
+  const cached = dayCache.get(dayKey);
+  if (cached && cached.expires > now) return cached.events;
+
+  const events = readDayUncached(dayKey);
+  const expires = dayKey < isoDate(new Date()) ? Infinity : now + TODAY_CACHE_TTL_MS;
+  dayCache.set(dayKey, { events, expires });
+  // Drop failed reads so they're retried rather than cached as a rejection.
+  events.catch(() => {
+    if (dayCache.get(dayKey)?.events === events) dayCache.delete(dayKey);
+  });
+  return events;
 }
 
 async function readRange(range: DateRange): Promise<Event[]> {
