@@ -94,7 +94,6 @@ export const isPortrait = (info: ImageInfo): boolean => {
       return info.height >= info.width;
   }
 };
-let pendingPortrait: ImageInfo | null = null;
 
 export async function fetchGeneralImages(count: number): Promise<ImageInfo[]> {
   let assets: AssetResponseDto[] = [];
@@ -172,18 +171,14 @@ export async function fetchSlides(): Promise<Slide[]> {
 
   const infos = interleave(generalImages, memoryImages);
 
-  for (const info of infos) {
-    recordSlideServed({
-      imageId: info.id,
-      ownerId: info.ownerId,
-      ownerName: info.ownerName,
-      capturedAt: info.fileCreatedAt || null,
-      isMemory: info.yearsAgo !== undefined,
-      yearsAgo: info.yearsAgo,
-    });
-  }
-
+  // Pair portraits within this single request. pendingPortrait used to be a
+  // module global shared across concurrent requests (mismatched pairings) and
+  // recordSlideServed counted every info as served — including a portrait held
+  // back that might never be returned. Keep the pairing local and record only
+  // the infos actually emitted in a slide.
   const slides: Slide[] = [];
+  const emitted: ImageInfo[] = [];
+  let pendingPortrait: ImageInfo | null = null;
 
   for (const info of infos) {
     if (isPortrait(info)) {
@@ -193,6 +188,7 @@ export async function fetchSlides(): Promise<Slide[]> {
           id: `${pendingPortrait.id}_${info.id}`,
           items: [pendingPortrait, info],
         });
+        emitted.push(pendingPortrait, info);
         pendingPortrait = null;
       } else {
         pendingPortrait = info;
@@ -204,7 +200,31 @@ export async function fetchSlides(): Promise<Slide[]> {
         isPortrait: false,
         items: [info],
       });
+      emitted.push(info);
     }
+  }
+
+  // An odd portrait left unpaired at the end is emitted as a lone portrait
+  // slide (rendered object-contain) rather than held across requests.
+  if (pendingPortrait) {
+    slides.push({
+      type: SlideType.SINGLE,
+      id: pendingPortrait.id,
+      isPortrait: true,
+      items: [pendingPortrait],
+    });
+    emitted.push(pendingPortrait);
+  }
+
+  for (const info of emitted) {
+    recordSlideServed({
+      imageId: info.id,
+      ownerId: info.ownerId,
+      ownerName: info.ownerName,
+      capturedAt: info.fileCreatedAt || null,
+      isMemory: info.yearsAgo !== undefined,
+      yearsAgo: info.yearsAgo,
+    });
   }
 
   slideFetchCount++;
