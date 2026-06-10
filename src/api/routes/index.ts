@@ -77,8 +77,8 @@ export const registerRoutes = (server: FastifyInstance) => {
             const location = await reverseGeocode(latitude, longitude);
             res.send(location);
           } catch (error) {
-            console.error(`Error fetching asset info for ${request.params}:`, error);
-            res.status(500).send({ error: 'Failed to fetch asset info' });
+            console.error(`Error reverse geocoding (${request.query.latitude}, ${request.query.longitude}):`, error);
+            res.status(500).send({ error: 'Failed to reverse geocode' });
           }
         },
       );

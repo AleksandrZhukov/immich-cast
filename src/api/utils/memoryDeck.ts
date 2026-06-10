@@ -1,4 +1,5 @@
 import { fetchMemoryImages, fetchAssetInfo } from '../services/immich';
+import { PHOTO_START_YEAR } from '../config/constants';
 import type { AssetResponseDto } from '../../types';
 import type { ImageInfo } from '../services/slides';
 
@@ -31,7 +32,7 @@ export class MemoryDeck {
 
     const now = new Date();
     const currentYear = now.getFullYear();
-    const startYear = 2017;
+    const startYear = PHOTO_START_YEAR;
 
     const allCards: MemoryCard[] = [];
     const perYear: string[] = [];

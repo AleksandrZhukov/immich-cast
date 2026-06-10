@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { env } from '../config/env';
+import { PHOTO_START_YEAR } from '../config/constants';
 import { type AssetResponseDto, AssetTypeEnum } from '../../types';
 
 export const immichApi = axios.create({
@@ -20,7 +21,7 @@ export const fetchRandomImages = async (): Promise<AssetResponseDto[]> => {
       isVisible: true,
       isArchived: false,
       size: BATCH_SIZE,
-      takenAfter: '2017-01-01T00:00:00.000Z',
+      takenAfter: `${PHOTO_START_YEAR}-01-01T00:00:00.000Z`,
       type: AssetTypeEnum.Image,
     });
     return res.data;
@@ -47,7 +48,7 @@ export const fetchMemoryImages = async (takenAfter: string, takenBefore: string)
   }
 };
 
-export const getAssetBuffer = async (id: string): Promise<Buffer<any>> => {
+export const getAssetBuffer = async (id: string): Promise<Buffer> => {
   const res = await immichApi.get(`/assets/${id}/thumbnail?size=preview`, {
     responseType: 'arraybuffer',
   });
