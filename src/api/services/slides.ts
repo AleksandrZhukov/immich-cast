@@ -41,6 +41,7 @@ const imageHistory = new ImageHistoryTracker(10000);
 const memoryDeck = new MemoryDeck();
 
 let memoryDeckInitPromise: Promise<void> | null = null;
+let memoryDeckInitInFlight = false;
 let slideFetchCount = 0;
 
 export function getMemoryDeckStats() {
@@ -48,13 +49,32 @@ export function getMemoryDeckStats() {
 }
 
 function ensureMemoryDeck(): Promise<void> {
-  if (!memoryDeckInitPromise) {
-    memoryDeckInitPromise = memoryDeck.init().catch((error) => {
-      console.error('[memory] ❌ Failed to initialize:', error);
-      memoryDeckInitPromise = null;
-    });
+  // (Re)initialize when there's no deck yet, or when a new calendar day has
+  // rolled over. The day-rollover re-init goes through this same single-flight
+  // promise (guarded by memoryDeckInitInFlight) so concurrent /api/slides
+  // requests at midnight share one init instead of double-initializing — and
+  // if Immich is down, init() resolves (the .catch swallows) and deal() simply
+  // returns [], degrading gracefully rather than 500-ing the route.
+  const needsInit = !memoryDeckInitPromise || (!memoryDeckInitInFlight && memoryDeck.needsReinit());
+
+  if (needsInit) {
+    if (memoryDeckInitPromise && memoryDeck.needsReinit()) {
+      console.log('[memory] New day detected, reinitializing memory deck');
+    }
+    memoryDeckInitInFlight = true;
+    memoryDeckInitPromise = memoryDeck
+      .init()
+      .catch((error) => {
+        console.error('[memory] ❌ Failed to initialize:', error);
+        // Leave the deck re-initializable on the next request.
+        memoryDeckInitPromise = null;
+      })
+      .finally(() => {
+        memoryDeckInitInFlight = false;
+      });
   }
-  return memoryDeckInitPromise;
+
+  return memoryDeckInitPromise!;
 }
 
 export const isPortrait = (info: ImageInfo): boolean => {

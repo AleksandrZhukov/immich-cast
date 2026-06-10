@@ -65,12 +65,17 @@ export class MemoryDeck {
     return this.initialized && this.cards.length > 0;
   }
 
-  async deal(count: number): Promise<ImageInfo[]> {
-    if (this.initializedDate && this.initializedDate !== MemoryDeck.todayKey()) {
-      console.log('[memory] New day detected, reinitializing memory deck');
-      await this.init();
-    }
+  /**
+   * True once a successful init has happened on a previous calendar day. The
+   * caller (slides service) routes the re-init through its single-flight guard
+   * rather than re-initializing inline here, so a midnight Immich outage can't
+   * reject concurrent deal()s.
+   */
+  needsReinit(): boolean {
+    return this.initializedDate !== null && this.initializedDate !== MemoryDeck.todayKey();
+  }
 
+  async deal(count: number): Promise<ImageInfo[]> {
     if (!this.isReady()) return [];
 
     const dealt: ImageInfo[] = [];
