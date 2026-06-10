@@ -17,9 +17,16 @@ import {
 } from '../stats/aggregator';
 import { recordWeatherSample } from '../stats/recorder';
 
-function parseRange(from?: string, to?: string): { from: Date; to: Date } {
-  const toDate = to ? new Date(to) : new Date();
-  const fromDate = from ? new Date(from) : new Date(toDate.getTime() - 29 * 86_400_000);
+export function parseRange(from?: string, to?: string): { from: Date; to: Date } {
+  // Garbage / missing dates fall back to defaults instead of producing
+  // Invalid Date (which silently yields an empty range downstream).
+  const parse = (s: string | undefined): Date | null => {
+    if (!s) return null;
+    const d = new Date(s);
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+  const toDate = parse(to) ?? new Date();
+  const fromDate = parse(from) ?? new Date(toDate.getTime() - 29 * 86_400_000);
   return { from: fromDate, to: toDate };
 }
 
