@@ -30,6 +30,16 @@ window.onload = () => {
   }
 
   // Play dummy image
+  let dummyMediaTimer = null;
+
+  function scheduleDummyMedia(delayMs) {
+    // Keep a single timer handle. Without this, each ~9-min refresh AND every
+    // 5s error retry forked an extra timer chain on a receiver that runs for
+    // weeks, so the callback rate multiplied without bound.
+    if (dummyMediaTimer) clearTimeout(dummyMediaTimer);
+    dummyMediaTimer = setTimeout(playDummyMedia, delayMs);
+  }
+
   function playDummyMedia() {
     const loadRequestData = new cast.framework.messages.LoadRequestData();
     loadRequestData.autoplay = true;
@@ -45,13 +55,14 @@ window.onload = () => {
 
     playerManager
       .load(loadRequestData)
-      .then(() => console.log('Dummy image loaded'))
+      .then(() => {
+        console.log('Dummy image loaded');
+        scheduleDummyMedia(60 * 9 * 1000); // Refresh every ~9 mins
+      })
       .catch((err) => {
         console.error('Error loading dummy image', err);
-        setTimeout(playDummyMedia, 5000);
+        scheduleDummyMedia(5000);
       });
-
-    setTimeout(playDummyMedia, 60 * 9 * 1000); // Refresh every ~9 mins
   }
 
   // Remove overlays
