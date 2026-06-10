@@ -109,23 +109,25 @@
     }
   }
 
-  const getAvatarBg = (color: string) => {
-    switch (color) {
-      case 'gray':
-        return 'bg-gray-500';
-      case 'yellow':
-        return 'bg-yellow-500';
-      case 'blue':
-        return 'bg-blue-500';
-      default:
-        return 'bg-gray-500';
-    }
+  const AVATAR_BG: Record<string, string> = {
+    primary: 'bg-sky-500',
+    pink: 'bg-pink-500',
+    red: 'bg-red-500',
+    yellow: 'bg-yellow-500',
+    blue: 'bg-blue-500',
+    green: 'bg-green-500',
+    purple: 'bg-purple-500',
+    orange: 'bg-orange-500',
+    gray: 'bg-gray-500',
+    amber: 'bg-amber-500',
   };
+  const getAvatarBg = (color: string) => AVATAR_BG[color] ?? 'bg-gray-500';
 
   const getInitials = (name: string) =>
     name
       .split(' ')
       .map((i) => i[0])
+      .slice(0, 2)
       .join('');
 </script>
 

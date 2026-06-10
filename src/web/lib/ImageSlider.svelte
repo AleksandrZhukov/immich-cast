@@ -36,8 +36,8 @@
         const newImages = response.data;
 
         if (append) {
-          const existingIds = new Set(images.map((img: any) => img.id));
-          const uniqueNewImages = newImages.filter((img: any) => !existingIds.has(img.id));
+          const existingIds = new Set(images.map((img) => img.id));
+          const uniqueNewImages = newImages.filter((img) => !existingIds.has(img.id));
 
           if (uniqueNewImages.length > 0) {
             const combined = [...images, ...uniqueNewImages];

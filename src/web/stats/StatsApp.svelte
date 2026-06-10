@@ -36,7 +36,7 @@
 
   const activeDays = $derived(daily.filter((d) => d.served > 0).length);
 
-  async function rangeFor(key: RangeKey): Promise<{ from: Date; to: Date }> {
+  function rangeFor(key: RangeKey): { from: Date; to: Date } {
     const to = new Date();
     if (key === '7d') return { from: new Date(to.getTime() - 6 * 86_400_000), to };
     if (key === '30d') return { from: new Date(to.getTime() - 29 * 86_400_000), to };
@@ -50,7 +50,7 @@
     loading = true;
     loadError = null;
     try {
-      const range = await rangeFor(rangeKey);
+      const range = rangeFor(rangeKey);
       const [s, d, dbo, sp, ce, md, ws, wd] = await Promise.all([
         api.summary(range),
         api.daily(range),
