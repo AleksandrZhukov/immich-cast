@@ -85,70 +85,31 @@ type NominatimResponse = {
   extratags: any;
 };
 
-export const getFormatedLocation = (location: NominatimResponse) => {
+export const getFormattedLocation = (location: NominatimResponse) => {
   if (!location) return '';
 
-  let formatted = '';
   const address = location.address;
+  if (!address) return location.display_name || '';
 
-  if (address) {
-    const parts = [];
+  const locality = address.village || address.town || address.city;
+  const parts: string[] = [];
 
-    if (address.amenity) {
-      parts.push(address.amenity);
-
-      if (address.village) {
-        parts.push(address.village);
-      } else if (address.town) {
-        parts.push(address.town);
-      } else if (address.city) {
-        parts.push(address.city);
-      }
-
-      if (address.country) {
-        parts.push(address.country);
-      }
-    } else if (address.tourism) {
-      parts.push(address.tourism);
-
-      if (address.country) {
-        parts.push(address.country);
-      }
-    } else if (address.locality) {
-      parts.push(address.locality);
-
-      if (address.country) {
-        parts.push(address.country);
-      }
-    } else {
-      if (address.road) {
-        parts.push(address.road);
-      }
-
-      if (address.neighbourhood) {
-        parts.push(address.neighbourhood);
-      }
-
-      if (address.village) {
-        parts.push(address.village);
-      } else if (address.town) {
-        parts.push(address.town);
-      } else if (address.city) {
-        parts.push(address.city);
-      }
-
-      if (address.country) {
-        parts.push(address.country);
-      }
-    }
-
-    formatted = parts.join(', ');
+  if (address.amenity) {
+    parts.push(address.amenity);
+    if (locality) parts.push(locality);
+  } else if (address.tourism) {
+    parts.push(address.tourism);
+  } else if (address.locality) {
+    parts.push(address.locality);
   } else {
-    // Fallback to display_name if address details not available
-    formatted = location.display_name || '';
+    if (address.road) parts.push(address.road);
+    if (address.neighbourhood) parts.push(address.neighbourhood);
+    if (locality) parts.push(locality);
   }
 
-  return formatted;
+  if (address.country) parts.push(address.country);
+
+  return parts.join(', ');
 };
 
 export const reverseGeocode = async (lat: number | undefined, lon: number | undefined): Promise<string | null> => {
@@ -172,7 +133,7 @@ export const reverseGeocode = async (lat: number | undefined, lon: number | unde
           'User-Agent': 'ImmichCast/1.0',
         },
       });
-      return getFormatedLocation(response.data);
+      return getFormattedLocation(response.data);
     });
 
     cacheSet(key, formatted);
