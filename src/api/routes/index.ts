@@ -56,7 +56,7 @@ export const registerRoutes = (server: FastifyInstance) => {
         } catch (error) {
           if (error instanceof AxiosError) {
             console.error(`Error archiving image ${request.params.id}:`, error.response?.data);
-            res.status(400).send({ error: error.response?.data });
+            return res.status(400).send({ error: error.response?.data });
           }
           res.status(500).send({ error: 'Unknown error' });
         }
