@@ -171,9 +171,11 @@ export async function getCaptureSpread(range: DateRange): Promise<{
 }
 
 function dayOfYear(d: Date): number {
-  const start = new Date(d.getFullYear(), 0, 0);
-  const diff = d.getTime() - start.getTime();
-  return Math.floor(diff / 86_400_000);
+  // Compute from local Y/M/D via UTC so every day is exactly 24h. Subtracting
+  // raw timestamps (d.getTime() - startOfYear) is off by one in DST timezones
+  // (deploy TZ is America/Edmonton) for dates after spring-forward, because
+  // that day is only 23h long.
+  return (Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 0)) / 86_400_000;
 }
 
 export type DailyByOwner = {

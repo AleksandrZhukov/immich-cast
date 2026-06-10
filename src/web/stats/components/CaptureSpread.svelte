@@ -68,9 +68,9 @@
   }
 
   function monthTick(monthIdx: number, year: number): number {
-    const d = new Date(year, monthIdx, 1);
-    const start = new Date(year, 0, 0);
-    return Math.floor((d.getTime() - start.getTime()) / 86_400_000);
+    // Match the API's dayOfYear: compute via UTC so DST-affected days stay 24h
+    // and gridlines line up with the bars.
+    return (Date.UTC(year, monthIdx, 1) - Date.UTC(year, 0, 0)) / 86_400_000;
   }
 
   let hovered = $state<{ year: number; doy: number; count: number; memory: number; x: number; y: number } | null>(null);
