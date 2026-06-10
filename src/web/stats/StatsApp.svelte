@@ -31,6 +31,7 @@
   let weatherSeries = $state<WeatherPoint[]>([]);
   let weatherDaily = $state<WeatherDailyRow[]>([]);
   let loading = $state(true);
+  let loadError = $state<string | null>(null);
   let knownDays = $state<string[]>([]);
 
   const activeDays = $derived(daily.filter((d) => d.served > 0).length);
@@ -47,26 +48,35 @@
 
   async function load() {
     loading = true;
-    const range = await rangeFor(rangeKey);
-    const [s, d, dbo, sp, ce, md, ws, wd] = await Promise.all([
-      api.summary(range),
-      api.daily(range),
-      api.dailyByOwner(range),
-      api.captureSpread(range),
-      api.castEvents(range),
-      api.memoryDeck(),
-      api.weather(range),
-      api.weatherDaily(range),
-    ]);
-    summary = s;
-    daily = d;
-    dailyByOwner = dbo;
-    captureSpread = sp;
-    castEvents = ce;
-    memoryDeck = md;
-    weatherSeries = ws;
-    weatherDaily = wd;
-    loading = false;
+    loadError = null;
+    try {
+      const range = await rangeFor(rangeKey);
+      const [s, d, dbo, sp, ce, md, ws, wd] = await Promise.all([
+        api.summary(range),
+        api.daily(range),
+        api.dailyByOwner(range),
+        api.captureSpread(range),
+        api.castEvents(range),
+        api.memoryDeck(),
+        api.weather(range),
+        api.weatherDaily(range),
+      ]);
+      summary = s;
+      daily = d;
+      dailyByOwner = dbo;
+      captureSpread = sp;
+      castEvents = ce;
+      memoryDeck = md;
+      weatherSeries = ws;
+      weatherDaily = wd;
+    } catch (e) {
+      // One failed endpoint rejected Promise.all and left the dashboard stuck
+      // on "Loading…" forever. Surface the error and clear the spinner.
+      console.error('Error loading stats:', e);
+      loadError = e instanceof Error ? e.message : 'Failed to load stats';
+    } finally {
+      loading = false;
+    }
   }
 
   onMount(async () => {
@@ -112,6 +122,8 @@
 
     {#if loading && !summary}
       <div class="text-zinc-500 mono text-sm">Loading…</div>
+    {:else if loadError && !summary}
+      <div class="text-rose-400 mono text-sm">Failed to load stats: {loadError}</div>
     {:else if summary}
       <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
         <StatCard label="Slides served" value={summary.totalServed} accent="sky" delay={0} />
