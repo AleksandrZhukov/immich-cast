@@ -7,28 +7,8 @@
   const PAD = { top: 16, right: 12, bottom: 24, left: 36 };
   const H = 160;
 
-  let tempEl = $state<HTMLDivElement | null>(null);
-  let aqiEl = $state<HTMLDivElement | null>(null);
   let tempW = $state(600);
   let aqiW = $state(600);
-
-  $effect(() => {
-    if (!tempEl) return;
-    const ro = new ResizeObserver((entries) => {
-      for (const e of entries) tempW = e.contentRect.width;
-    });
-    ro.observe(tempEl);
-    return () => ro.disconnect();
-  });
-
-  $effect(() => {
-    if (!aqiEl) return;
-    const ro = new ResizeObserver((entries) => {
-      for (const e of entries) aqiW = e.contentRect.width;
-    });
-    ro.observe(aqiEl);
-    return () => ro.disconnect();
-  });
 
   const tempInnerW = $derived(Math.max(100, tempW - PAD.left - PAD.right));
   const aqiInnerW = $derived(Math.max(100, aqiW - PAD.left - PAD.right));
@@ -137,7 +117,7 @@
   <div class="text-sm text-zinc-500 italic">No weather samples recorded yet.</div>
 {:else}
   <div class="flex flex-col gap-6">
-    <div bind:this={tempEl} class="relative w-full">
+    <div bind:clientWidth={tempW} class="relative w-full">
       <div class="flex items-baseline justify-between mb-2">
         <div class="text-sm text-zinc-400">Temperature</div>
         <div class="mono text-xs text-zinc-500">
@@ -213,7 +193,7 @@
       {/if}
     </div>
 
-    <div bind:this={aqiEl} class="relative w-full">
+    <div bind:clientWidth={aqiW} class="relative w-full">
       <div class="flex items-baseline justify-between mb-2">
         <div class="text-sm text-zinc-400">Air quality (AQI)</div>
         <div class="mono text-xs text-zinc-500">peak {aqiMax}</div>

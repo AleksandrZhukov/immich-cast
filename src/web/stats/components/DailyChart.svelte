@@ -5,18 +5,8 @@
   const { data } = $props<{ data: DailyPoint[] }>();
 
   const PAD = { top: 16, right: 12, bottom: 24, left: 36 };
-  let containerEl: HTMLDivElement;
   let w = $state(600);
   const h = 220;
-
-  $effect(() => {
-    if (!containerEl) return;
-    const ro = new ResizeObserver((entries) => {
-      for (const e of entries) w = e.contentRect.width;
-    });
-    ro.observe(containerEl);
-    return () => ro.disconnect();
-  });
 
   const innerW = $derived(Math.max(100, w - PAD.left - PAD.right));
   const innerH = h - PAD.top - PAD.bottom;
@@ -69,7 +59,7 @@
   }
 </script>
 
-<div bind:this={containerEl} class="relative w-full">
+<div bind:clientWidth={w} class="relative w-full">
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <svg width={w} height={h} viewBox="0 0 {w} {h}" onmousemove={onMove} onmouseleave={() => (hover = null)}>
     <defs>

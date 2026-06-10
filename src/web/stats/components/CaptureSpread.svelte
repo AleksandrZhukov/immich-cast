@@ -37,16 +37,8 @@
   const maxCount = $derived(Math.max(1, ...data.cells.map((c: { count: number }) => c.count)));
 
   let chartW = $state(900);
+  // containerEl is still needed for pointer-position math in handlePointer.
   let containerEl: HTMLDivElement;
-
-  $effect(() => {
-    if (!containerEl) return;
-    const ro = new ResizeObserver((entries) => {
-      for (const e of entries) chartW = e.contentRect.width;
-    });
-    ro.observe(containerEl);
-    return () => ro.disconnect();
-  });
 
   const innerW = $derived(Math.max(200, chartW - LABEL_W - RIGHT_PAD));
   const dayW = $derived(innerW / 366);
@@ -90,7 +82,7 @@
   }
 </script>
 
-<div bind:this={containerEl} class="relative w-full">
+<div bind:this={containerEl} bind:clientWidth={chartW} class="relative w-full">
   <svg width={chartW} {height} viewBox="0 0 {chartW} {height}" class="block">
     <!-- month grid -->
     {#each Array(12) as _, m}
