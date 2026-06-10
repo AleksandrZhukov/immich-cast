@@ -1,5 +1,5 @@
 import { type FastifyInstance, type FastifyRequest } from 'fastify';
-import { fetchRandomImages, getAssetBuffer, archiveAsset } from '../services/immich';
+import { getAssetBuffer, archiveAsset } from '../services/immich';
 import { reverseGeocode } from '../services/geocoding';
 import { fetchSlides, getMemoryDeckStats } from '../services/slides';
 import { getCurrentWeather } from '../services/weather';
@@ -32,11 +32,6 @@ export function parseRange(from?: string, to?: string): { from: Date; to: Date }
 export const registerRoutes = (server: FastifyInstance) => {
   server.register(
     (instance, _, next) => {
-      instance.get('/images', async (_, res) => {
-        const assets = await fetchRandomImages();
-        return res.send(assets);
-      });
-
       instance.get('/slides', async (_, res) => {
         const slides = await fetchSlides();
         return res.send(slides);

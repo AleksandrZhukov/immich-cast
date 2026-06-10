@@ -10,7 +10,7 @@ export const immichApi = axios.create({
   },
 });
 
-export const BATCH_SIZE = 50;
+const BATCH_SIZE = 50;
 
 export const validateToken = () => immichApi.post('/auth/validateToken');
 
