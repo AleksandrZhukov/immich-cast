@@ -48,9 +48,15 @@ export const registerRoutes = (server: FastifyInstance) => {
           const { id } = request.params;
           const buffer = await getAssetBuffer(id);
 
-          res.header('Content-Type', 'image/webp').header('Content-Length', buffer.length).send(buffer);
+          // Thumbnails per id are stable, so let the Chromecast (which
+          // re-downloads repeats) and any proxy cache them.
+          res
+            .header('Content-Type', 'image/webp')
+            .header('Content-Length', buffer.length)
+            .header('Cache-Control', 'public, max-age=86400, immutable')
+            .send(buffer);
         } catch (error) {
-          console.error(`Error fetching image ${request.params}:`, error);
+          console.error(`Error fetching image ${request.params.id}:`, error);
           res.status(500).send({ error: 'Failed to fetch image' });
         }
       });
