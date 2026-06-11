@@ -56,6 +56,7 @@ END_HOUR=22                              # Stop at 10pm
 # Optional
 PORT=2284                                # Server port (default: 2284)
 SLIDE_INTERVAL=30000                     # Slide duration in ms (default: 30s)
+MEMORY_PERCENTAGE=20                      # Share of "N years ago" memory slides (default: 20% = every 5th); 0 disables
 IMMICH_OWNERS_API_KEYS=uuid1=key1,uuid2=key2  # Per-user keys for archiving
 
 # Weather (disabled by default)

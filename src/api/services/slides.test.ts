@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { isPortrait, interleave, type ImageInfo } from './slides';
+import { isPortrait, interleave, batchCountsFor, type ImageInfo } from './slides';
 import { ExifOrientation } from '../../types';
 
 function img(overrides: Partial<ImageInfo> = {}): ImageInfo {
@@ -48,6 +48,26 @@ describe('isPortrait', () => {
   ])('missing/invalid orientation (%s) falls back to dimensions', (_label, value) => {
     expect(isPortrait(img({ orientation: value as never, width: 100, height: 200 }))).toBe(true);
     expect(isPortrait(img({ orientation: value as never, width: 200, height: 100 }))).toBe(false);
+  });
+});
+
+describe('batchCountsFor', () => {
+  test('20% → 1 memory every 5th photo', () => {
+    expect(batchCountsFor(20)).toEqual({ memoryCount: 1, generalCount: 4 });
+  });
+
+  test('0% disables memories and falls back to a plain general batch', () => {
+    expect(batchCountsFor(0)).toEqual({ memoryCount: 0, generalCount: 5 });
+  });
+
+  test('share maps to one memory per 100/percentage photos', () => {
+    expect(batchCountsFor(50)).toEqual({ memoryCount: 1, generalCount: 1 });
+    expect(batchCountsFor(25)).toEqual({ memoryCount: 1, generalCount: 3 });
+    expect(batchCountsFor(10)).toEqual({ memoryCount: 1, generalCount: 9 });
+  });
+
+  test('clamps tiny intervals so there is always at least one general image', () => {
+    expect(batchCountsFor(100)).toEqual({ memoryCount: 1, generalCount: 1 });
   });
 });
 

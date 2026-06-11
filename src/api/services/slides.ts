@@ -4,6 +4,7 @@ import type { ImageInfo, Slide } from '../../types';
 import { ImageHistoryTracker } from '../utils/imageHistory';
 import { MemoryDeck } from '../utils/memoryDeck';
 import { recordSlideServed } from '../stats/recorder';
+import { env } from '../config/env';
 
 export type { ImageInfo, Slide } from '../../types';
 
@@ -71,6 +72,17 @@ export const isPortrait = (info: ImageInfo): boolean => {
   }
 };
 
+// Translate a desired memory share into per-request counts. The memory deck
+// deals one memory per batch; the batch size is sized so that one memory every
+// `100 / percentage` photos lands the requested share (e.g. 20% → 1 memory + 4
+// general = every 5th photo). 0% disables memories and falls back to a plain
+// general batch.
+export function batchCountsFor(memoryPercentage: number): { memoryCount: number; generalCount: number } {
+  if (memoryPercentage <= 0) return { memoryCount: 0, generalCount: 5 };
+  const interval = Math.max(2, Math.round(100 / memoryPercentage));
+  return { memoryCount: 1, generalCount: interval - 1 };
+}
+
 export async function fetchGeneralImages(count: number): Promise<ImageInfo[]> {
   let assets: AssetResponseDto[] = [];
   let attempts = 0;
@@ -137,8 +149,7 @@ export function interleave(general: ImageInfo[], memories: ImageInfo[]): ImageIn
 export async function fetchSlides(): Promise<Slide[]> {
   await ensureMemoryDeck();
 
-  const memoryCount = 1;
-  const generalCount = 5;
+  const { memoryCount, generalCount } = batchCountsFor(env.slides.memoryPercentage);
 
   const [memoryImages, generalImages] = await Promise.all([
     memoryDeck.deal(memoryCount),

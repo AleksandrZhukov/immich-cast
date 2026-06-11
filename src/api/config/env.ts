@@ -42,6 +42,7 @@ const raw = createEnv({
     END_HOUR: hourSchema,
     PORT: z.coerce.number().int().positive().default(2284),
     SLIDE_INTERVAL: z.coerce.number().int().positive().default(30000),
+    MEMORY_PERCENTAGE: z.coerce.number().int().min(0).max(100).default(20),
     WEATHER_ENABLED: z
       .enum(['true', 'false'])
       .default('false')
@@ -76,6 +77,9 @@ export const env = {
   },
   server: {
     port: raw.PORT,
+  },
+  slides: {
+    memoryPercentage: raw.MEMORY_PERCENTAGE,
   },
   client: {
     slideInterval: raw.SLIDE_INTERVAL,
