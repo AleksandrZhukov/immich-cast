@@ -14,6 +14,12 @@ let memoryDeckInitPromise: Promise<void> | null = null;
 let memoryDeckInitInFlight = false;
 let slideFetchCount = 0;
 
+// A lone portrait left at the end of a request is held here and paired with the
+// first portrait of a later request, so verticals always render two-up. We only
+// recordSlideServed() an info when it's actually emitted in a slide (not while
+// it's held), so a portrait waiting for its pair isn't counted as shown.
+let pendingPortrait: ImageInfo | null = null;
+
 export function getMemoryDeckStats() {
   return memoryDeck.getStats();
 }
@@ -141,14 +147,11 @@ export async function fetchSlides(): Promise<Slide[]> {
 
   const infos = interleave(generalImages, memoryImages);
 
-  // Pair portraits within this single request. pendingPortrait used to be a
-  // module global shared across concurrent requests (mismatched pairings) and
-  // recordSlideServed counted every info as served — including a portrait held
-  // back that might never be returned. Keep the pairing local and record only
-  // the infos actually emitted in a slide.
+  // Pair portraits, carrying an unpaired one across requests via the module-level
+  // pendingPortrait so verticals always show two-up. Record only the infos
+  // actually emitted in a slide (a held portrait is recorded when it later pairs).
   const slides: Slide[] = [];
   const emitted: ImageInfo[] = [];
-  let pendingPortrait: ImageInfo | null = null;
 
   for (const info of infos) {
     if (isPortrait(info)) {
@@ -174,17 +177,8 @@ export async function fetchSlides(): Promise<Slide[]> {
     }
   }
 
-  // An odd portrait left unpaired at the end is emitted as a lone portrait
-  // slide (rendered object-contain) rather than held across requests.
-  if (pendingPortrait) {
-    slides.push({
-      type: SlideType.SINGLE,
-      id: pendingPortrait.id,
-      isPortrait: true,
-      items: [pendingPortrait],
-    });
-    emitted.push(pendingPortrait);
-  }
+  // A portrait left unpaired at the end is kept in pendingPortrait and paired
+  // with the first portrait of a later request, so it's never shown alone.
 
   for (const info of emitted) {
     recordSlideServed({
