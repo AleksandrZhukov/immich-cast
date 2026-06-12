@@ -71,9 +71,12 @@ export const registerRoutes = (server: FastifyInstance) => {
 
       instance.get(
         '/location',
-        async (request: FastifyRequest<{ Querystring: { longitude: number; latitude: number } }>, res) => {
+        async (request: FastifyRequest<{ Querystring: { longitude: string; latitude: string } }>, res) => {
           try {
-            const { longitude, latitude } = request.query;
+            // Query params arrive as strings; coerce before the geocoder, which
+            // needs real numbers (e.g. for its toFixed cache key).
+            const latitude = Number(request.query.latitude);
+            const longitude = Number(request.query.longitude);
             const location = await reverseGeocode(latitude, longitude);
             res.send(location);
           } catch (error) {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { getFormattedLocation } from './geocoding';
+import { getFormattedLocation, reverseGeocode } from './geocoding';
 
 const loc = (partial: Record<string, unknown>) => partial as never;
 
@@ -42,5 +42,13 @@ describe('getFormattedLocation', () => {
 
   test('missing address and no display_name yields empty string', () => {
     expect(getFormattedLocation(loc({}))).toBe('');
+  });
+});
+
+describe('reverseGeocode guard', () => {
+  test('returns null for missing or NaN coordinates without hitting the network', async () => {
+    expect(await reverseGeocode(undefined, undefined)).toBeNull();
+    expect(await reverseGeocode(NaN, 5)).toBeNull();
+    expect(await reverseGeocode(5, NaN)).toBeNull();
   });
 });

@@ -113,7 +113,8 @@ export const getFormattedLocation = (location: NominatimResponse) => {
 };
 
 export const reverseGeocode = async (lat: number | undefined, lon: number | undefined): Promise<string | null> => {
-  if (!lat || !lon) return null;
+  // Reject missing/NaN coords, but allow 0 (equator / prime meridian).
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
 
   const key = `${lat.toFixed(4)},${lon.toFixed(4)}`;
   const cached = cacheGet(key);
