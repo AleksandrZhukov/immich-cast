@@ -4,7 +4,9 @@ import { recordWeatherSample } from '../stats/recorder';
 import type { CurrentWeather } from '../../types';
 
 const CITY_ID = env.weather.cityId;
-const WEATHER_TTL_MS = 60_000;
+// Keep the de-dup cache aligned with how often we refresh so a background poll
+// always finds the cache just expired and triggers a fresh fetch + sample.
+const WEATHER_TTL_MS = env.client.weatherRefreshInterval;
 
 type WeatherResponse = {
   current: {
@@ -84,4 +86,22 @@ export const getCurrentWeather = async (): Promise<CurrentWeather | null> => {
     });
 
   return inFlight;
+};
+
+// Weather/AQI samples used to be recorded only as a side effect of the
+// frontend slideshow polling /api/weather. The slideshow only runs while the
+// cast app is alive (START_HOUR–END_HOUR), so nothing was tracked outside that
+// window. Poll from the server on a timer instead, so weather and air quality
+// are sampled around the clock regardless of cast hours.
+export const startWeatherPolling = (): void => {
+  if (!CITY_ID || !env.client.weatherEnabled) return;
+
+  const tick = () => {
+    void getCurrentWeather().catch((err) => {
+      console.error('[weather] background poll failed:', err instanceof Error ? err.message : err);
+    });
+  };
+
+  tick();
+  setInterval(tick, env.client.weatherRefreshInterval);
 };

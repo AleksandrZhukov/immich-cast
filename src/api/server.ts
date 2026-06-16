@@ -6,6 +6,7 @@ import { env } from './config/env';
 import { validateToken } from './services/immich';
 import { registerRoutes } from './routes';
 import { startMonitoring } from './cast/monitor';
+import { startWeatherPolling } from './services/weather';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,6 +29,7 @@ const start = async () => {
     try {
       await server.listen({ port: env.server.port, host: '0.0.0.0' });
       startMonitoring();
+      startWeatherPolling();
       console.log(`Server running on port ${env.server.port}`);
     } catch (err) {
       console.error(`Failed to start server on port ${env.server.port}. The port may already be in use.`);
