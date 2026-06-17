@@ -2,6 +2,7 @@ import { fetchAssetInfo, fetchRandomImages } from './immich';
 import { type AssetResponseDto, ExifOrientation, SlideType } from '../../types';
 import type { ImageInfo, Slide } from '../../types';
 import { ImageHistoryTracker } from '../utils/imageHistory';
+import { isExcluded } from '../utils/excludedImages';
 import { MemoryDeck } from '../utils/memoryDeck';
 import { recordSlideServed } from '../stats/recorder';
 import { env } from '../config/env';
@@ -90,7 +91,7 @@ export async function fetchGeneralImages(count: number): Promise<ImageInfo[]> {
 
   while (assets.length < count && attempts < maxAttempts) {
     const fetchedAssets = await fetchRandomImages();
-    const newAssets = fetchedAssets.filter((asset) => !imageHistory.hasBeenShown(asset.id));
+    const newAssets = fetchedAssets.filter((asset) => !imageHistory.hasBeenShown(asset.id) && !isExcluded(asset.id));
     assets = assets.concat(newAssets);
     attempts++;
   }
@@ -99,7 +100,7 @@ export async function fetchGeneralImages(count: number): Promise<ImageInfo[]> {
     console.warn(`[slides] ⚠️ History full (${imageHistory.getHistorySize()}), clearing and retrying`);
     imageHistory.clear();
     const additionalAssets = await fetchRandomImages();
-    assets = assets.concat(additionalAssets);
+    assets = assets.concat(additionalAssets.filter((asset) => !isExcluded(asset.id)));
   }
 
   assets.forEach((asset) => imageHistory.addImage(asset.id));

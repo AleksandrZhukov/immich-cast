@@ -8,17 +8,17 @@
     class: className,
     isPortrait,
     isActive = false,
-    isArchived = false,
+    isHidden = false,
     duration = 30000,
-    onArchiveRequest,
+    onActionRequest,
   } = $props<{
     image: ImageInfo;
     class?: string;
     isPortrait?: boolean;
     isActive?: boolean;
-    isArchived?: boolean;
+    isHidden?: boolean;
     duration?: number;
-    onArchiveRequest?: (image: ImageInfo) => void;
+    onActionRequest?: (image: ImageInfo) => void;
   }>();
 
   let imageLocation = $state<string | null>();
@@ -32,7 +32,7 @@
   let pressStart = { x: 0, y: 0 };
 
   function startPress(x: number, y: number) {
-    if (isArchived || !isActive) return;
+    if (isHidden || !isActive) return;
     pressStart = { x, y };
     const startedAt = performance.now();
     const tick = () => {
@@ -42,7 +42,7 @@
     pressRaf = requestAnimationFrame(tick);
     pressTimer = setTimeout(() => {
       cancelPress();
-      onArchiveRequest?.(image);
+      onActionRequest?.(image);
     }, LONG_PRESS_MS);
   }
 
@@ -133,7 +133,7 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-  class="{className || ''} flex-shrink-0 relative overflow-hidden {isArchived ? 'opacity-30' : ''}"
+  class="{className || ''} flex-shrink-0 relative overflow-hidden {isHidden ? 'opacity-30' : ''}"
   ontouchstart={onTouchStart}
   ontouchmove={onTouchMove}
   ontouchend={cancelPress}
@@ -204,7 +204,7 @@
             transform="rotate(-90 12 12)"
           />
         </svg>
-        Hold to archive…
+        Hold for options…
       </div>
     </div>
   {/if}

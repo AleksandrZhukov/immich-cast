@@ -1,5 +1,6 @@
 import { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { getAssetBuffer, archiveAsset } from '../services/immich';
+import { exclude } from '../utils/excludedImages';
 import { reverseGeocode } from '../services/geocoding';
 import { fetchSlides, getMemoryDeckStats } from '../services/slides';
 import { getCurrentWeather } from '../services/weather';
@@ -66,6 +67,18 @@ export const registerRoutes = (server: FastifyInstance) => {
             return res.status(400).send({ error: error.response?.data });
           }
           res.status(500).send({ error: 'Unknown error' });
+        }
+      });
+
+      // Local-only "don't show this in the slideshow" — never touches Immich.
+      instance.post('/images/:id/exclude', async (request: FastifyRequest<{ Params: { id: string } }>, res) => {
+        try {
+          const { id } = request.params;
+          await exclude(id);
+          res.send({ id, excluded: true });
+        } catch (error) {
+          console.error(`Error excluding image ${request.params.id}:`, error);
+          res.status(500).send({ error: 'Failed to exclude image' });
         }
       });
 

@@ -1,4 +1,5 @@
 import { fetchMemoryImages, fetchAssetInfo } from '../services/immich';
+import { isExcluded } from './excludedImages';
 import { PHOTO_START_YEAR } from '../config/constants';
 import type { AssetResponseDto } from '../../types';
 import type { ImageInfo } from '../services/slides';
@@ -81,7 +82,10 @@ export class MemoryDeck {
 
     const dealt: ImageInfo[] = [];
 
-    for (let i = 0; i < count; i++) {
+    // Cap scanning at one full pass so an all-excluded deck can't spin forever;
+    // excluded cards are skipped (not dealt) but still advance the cursor.
+    let scanned = 0;
+    while (dealt.length < count && scanned < this.cards.length) {
       if (this.cursor >= this.cards.length) {
         this.shuffle();
         console.log(
@@ -90,6 +94,10 @@ export class MemoryDeck {
       }
 
       const card = this.cards[this.cursor++];
+      scanned++;
+
+      if (isExcluded(card.asset.id)) continue;
+
       const info = await this.cardToImageInfo(card);
       dealt.push(info);
 

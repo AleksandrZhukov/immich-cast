@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import axios from 'redaxios';
   import SlideItem from './SlideItem.svelte';
-  import ArchiveConfirmDialog from './ArchiveConfirmDialog.svelte';
+  import SlideActionDialog from './SlideActionDialog.svelte';
   import { type ImageInfo, type Slide, SlideType } from './types';
 
   const { slideInterval = 10000 } = $props();
@@ -19,8 +19,8 @@
   let touchEndX = $state(0);
   let isDragging = $state(false);
   let dragOffset = $state(0);
-  let archiveCandidate = $state<ImageInfo | null>(null);
-  let archivedIds = $state(new Set<string>());
+  let actionCandidate = $state<ImageInfo | null>(null);
+  let hiddenIds = $state(new Set<string>());
 
   let intervalId: number;
   let mounted = $state(false);
@@ -102,33 +102,36 @@
 
   function startSlideInterval() {
     if (intervalId) clearInterval(intervalId);
-    if (archiveCandidate) return;
+    if (actionCandidate) return;
     intervalId = setInterval(() => nextSlide(true), slideInterval) as unknown as number;
   }
 
-  function onArchiveRequest(image: ImageInfo) {
-    archiveCandidate = image;
+  function onActionRequest(image: ImageInfo) {
+    actionCandidate = image;
     if (intervalId) {
       clearInterval(intervalId);
       intervalId = 0;
     }
   }
 
-  function dismissArchive() {
-    archiveCandidate = null;
+  function dismissAction() {
+    actionCandidate = null;
     startSlideInterval();
   }
 
-  async function confirmArchive() {
-    const target = archiveCandidate;
-    archiveCandidate = null;
+  // Both archive and exclude hide the photo from the slideshow; locally we just
+  // mark it hidden so it greys out / disappears immediately. The difference is
+  // server-side: archive flips Immich visibility, exclude only persists locally.
+  async function runAction(endpoint: 'archive' | 'exclude') {
+    const target = actionCandidate;
+    actionCandidate = null;
     startSlideInterval();
     if (!target) return;
     try {
-      await axios.post(`/api/images/${target.id}/archive`);
-      archivedIds = new Set([...archivedIds, target.id]);
+      await axios.post(`/api/images/${target.id}/${endpoint}`);
+      hiddenIds = new Set([...hiddenIds, target.id]);
     } catch (e) {
-      console.error('Error archiving image:', e);
+      console.error(`Error running ${endpoint} on image:`, e);
     }
   }
 
@@ -198,12 +201,12 @@
   });
 
   $effect(() => {
-    // Re-arm the auto-advance whenever the slide interval or archive state
+    // Re-arm the auto-advance whenever the slide interval or action-dialog state
     // changes — both are read inside startSlideInterval, so list them
     // explicitly here instead of relying on transitive dependency tracking.
     // Guarded on `mounted` (now $state) so it doesn't race the initial fetch.
     void slideInterval;
-    void archiveCandidate;
+    void actionCandidate;
     if (mounted) {
       startSlideInterval();
     }
@@ -278,17 +281,17 @@
                 image={image.items[0]}
                 class="flex-1 h-full"
                 isActive={index === currentIndex}
-                isArchived={archivedIds.has(image.items[0].id)}
+                isHidden={hiddenIds.has(image.items[0].id)}
                 duration={slideInterval}
-                {onArchiveRequest}
+                {onActionRequest}
               />
               <SlideItem
                 image={image.items[1]}
                 class="flex-1 h-full"
                 isActive={index === currentIndex}
-                isArchived={archivedIds.has(image.items[1].id)}
+                isHidden={hiddenIds.has(image.items[1].id)}
                 duration={slideInterval}
-                {onArchiveRequest}
+                {onActionRequest}
               />
             </div>
           {:else}
@@ -297,9 +300,9 @@
               class="w-full h-full"
               isPortrait={image.isPortrait}
               isActive={index === currentIndex}
-              isArchived={archivedIds.has(image.items[0].id)}
+              isHidden={hiddenIds.has(image.items[0].id)}
               duration={slideInterval}
-              {onArchiveRequest}
+              {onActionRequest}
             />
           {/if}
         </div>
@@ -313,5 +316,10 @@
     </div>
   {/if}
 
-  <ArchiveConfirmDialog open={archiveCandidate !== null} onConfirm={confirmArchive} onCancel={dismissArchive} />
+  <SlideActionDialog
+    open={actionCandidate !== null}
+    onArchive={() => runAction('archive')}
+    onExclude={() => runAction('exclude')}
+    onCancel={dismissAction}
+  />
 </div>
