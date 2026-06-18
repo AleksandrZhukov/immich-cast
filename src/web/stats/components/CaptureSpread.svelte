@@ -2,7 +2,7 @@
   import type { CaptureSpread } from '../lib/api';
   import { dayOfYearToDate, formatDate, monthName, thousands } from '../lib/format';
 
-  const { data } = $props<{ data: CaptureSpread }>();
+  const { data, showMemories = true } = $props<{ data: CaptureSpread; showMemories?: boolean }>();
 
   const ROW_H = 36;
   const ROW_GAP = 4;
@@ -108,9 +108,10 @@
 
       {#each Array(366) as _, doy}
         {@const cell = cellsByYear.get(year)?.get(doy + 1)}
-        {#if cell && cell.count > 0}
-          {@const h = barHeight(cell.count)}
-          {@const memH = cell.memory > 0 ? (cell.memory / cell.count) * h : 0}
+        {@const regCount = cell ? cell.count - cell.memory : 0}
+        {#if cell && (showMemories ? cell.count : regCount) > 0}
+          {@const h = barHeight(showMemories ? cell.count : regCount)}
+          {@const memH = showMemories && cell.memory > 0 ? (cell.memory / cell.count) * h : 0}
           {@const regH = h - memH}
           {@const bx = LABEL_W + doy * dayW}
           {@const bw = Math.max(1.5, dayW - 0.5)}
@@ -123,7 +124,7 @@
             onmouseleave={() => (hovered = null)}
           >
             {#if regH > 0}
-              <rect x={bx} y={rowY + ROW_H - regH} width={bw} height={regH} fill={skyColor(cell.count)} rx="0.5" />
+              <rect x={bx} y={rowY + ROW_H - regH} width={bw} height={regH} fill={skyColor(showMemories ? cell.count : regCount)} rx="0.5" />
             {/if}
             {#if memH > 0}
               <rect x={bx} y={rowY + ROW_H - h} width={bw} height={memH} fill={amberColor(cell.count)} rx="0.5" />

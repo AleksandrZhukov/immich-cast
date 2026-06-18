@@ -33,6 +33,7 @@
   let loading = $state(true);
   let loadError = $state<string | null>(null);
   let knownDays = $state<string[]>([]);
+  let showMemories = $state(true);
 
   const activeDays = $derived(daily.filter((d) => d.served > 0).length);
 
@@ -163,12 +164,18 @@
               {captureSpread.minYear}–{captureSpread.maxYear} · {captureSpread.cells.length} days of photos
             </div>
           </div>
-          <p class="text-xs text-zinc-500 mb-4">
-            Each bar is a day in the photo's capture year. Taller bars = shown more.
-            <span class="text-accent">Sky</span> = regular slides,
-            <span class="text-accent-amber">amber</span> = shown as "on this day" memory.
-          </p>
-          <CaptureSpreadView data={captureSpread} />
+          <div class="flex items-baseline justify-between gap-4 mb-4">
+            <p class="text-xs text-zinc-500">
+              Each bar is a day in the photo's capture year. Taller bars = shown more.
+              <span class="text-accent">Sky</span> = regular slides,
+              <span class="text-accent-amber">amber</span> = shown as "on this day" memory.
+            </p>
+            <label class="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer select-none shrink-0">
+              <input type="checkbox" bind:checked={showMemories} class="accent-amber-400" />
+              Show memories
+            </label>
+          </div>
+          <CaptureSpreadView data={captureSpread} {showMemories} />
         </section>
       {/if}
 
